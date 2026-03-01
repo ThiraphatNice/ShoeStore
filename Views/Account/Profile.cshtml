@@ -1,0 +1,21 @@
+@model ShoeStore.Models.User
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<section class="home-hero">
+    <h1>Profile</h1>
+    <p>Manage your account and sign out securely.</p>
+</section>
+
+<section class="product-section">
+    <div class="product-card profile-card">
+        <h3>@Model?.Username</h3>
+        <p class="mb-1"><strong>Email:</strong> @Model?.Email</p>
+        <p class="mb-4"><strong>Role:</strong> @Model?.Role</p>
+        <form asp-action="Logout" method="post">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-danger px-4">Logout</button>
+        </form>
+    </div>
+</section>

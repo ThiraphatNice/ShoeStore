@@ -1,13 +1,66 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
+    var topSales = new[]
+    {
+        new { Name = "Shoes No.01 (Black)", Price = "6,500.-" },
+        new { Name = "Shoes No.02 (White)", Price = "5,990.-" },
+        new { Name = "Shoes No.03 (Gray)", Price = "6,250.-" },
+        new { Name = "Shoes No.04 (Blue)", Price = "6,750.-" },
+        new { Name = "Shoes No.05 (Red)", Price = "6,150.-" }
+    };
+
+    var sportShoes = new[]
+    {
+        new { Name = "Runner Max", Price = "4,900.-" },
+        new { Name = "Velocity", Price = "5,200.-" },
+        new { Name = "Ultra Boost", Price = "5,650.-" },
+        new { Name = "FlyLight", Price = "4,750.-" },
+        new { Name = "Sprint LX", Price = "5,050.-" }
+    };
 }
 
-<div class="container mt-5">
-    <div class="text-center">
-        <h1 class="display-4">Welcome to Shoe Store</h1>
-        <p>Hello, @ViewBag.Username! You are logged in as @ViewBag.Role.</p>
-        <form method="post" action="@Url.Action("Logout", "Account")" class="d-inline">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
+<section class="home-hero">
+    <h1>Welcome to Shoes Store</h1>
+    @if (User.Identity?.IsAuthenticated ?? false)
+    {
+        <p>Hello, @User.Identity!.Name! Enjoy the latest drops tailored for you.</p>
+    }
+    else
+    {
+        <p>Discover curated sneakers, sport shoes, and everyday essentials.</p>
+    }
+</section>
+
+<section class="product-section">
+    <div class="section-header">
+        <h2 class="section-heading">Top Sales</h2>
+        <span class="tag-pill">&rsaquo;</span>
     </div>
-</div>
+    <div class="product-grid">
+        @foreach (var item in topSales)
+        {
+            <article class="product-card">
+                <div class="product-illustration">Shoe</div>
+                <h3>@item.Name</h3>
+                <div class="price">@item.Price</div>
+            </article>
+        }
+    </div>
+</section>
+
+<section class="product-section">
+    <div class="section-header">
+        <h2 class="section-heading">Sport Shoes</h2>
+        <span class="tag-pill">&rsaquo;</span>
+    </div>
+    <div class="product-grid">
+        @foreach (var item in sportShoes)
+        {
+            <article class="product-card">
+                <div class="product-illustration">Run</div>
+                <h3>@item.Name</h3>
+                <div class="price">@item.Price</div>
+            </article>
+        }
+    </div>
+</section>

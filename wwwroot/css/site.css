@@ -1,5 +1,7 @@
 html {
   font-size: 14px;
+  position: relative;
+  min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,24 +10,182 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
-  margin-bottom: 60px;
+  margin: 0;
+  font-family: "Poppins", Arial, sans-serif;
+  background-color: #fdecec;
+  color: #2d2d2d;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+.page-shell {
+  min-height: calc(100vh - 140px);
+  padding: 40px 24px;
+}
+
+.main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer {
+  background: #fff;
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #b53636;
+}
+
+.main-navbar {
+  background-color: #7d2424;
+  padding: 0.75rem 2rem;
+}
+
+.main-navbar .navbar-toggler {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.main-navbar .navbar-toggler-icon {
+  filter: invert(1);
+}
+
+.brand-mark {
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.4rem;
+}
+
+.brand-mark:hover {
+  color: #ffe4d9;
+}
+
+.nav-link-contrast {
+  color: #fff !important;
+  font-weight: 500;
+}
+
+.nav-link-contrast:hover,
+.nav-link-contrast:focus {
+  color: #ffe4d9 !important;
+}
+
+.profile-pill {
+  padding: 0.4rem 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 999px;
+}
+
+.home-hero {
+  text-align: center;
+  padding: 40px 0;
+}
+
+.home-hero h1 {
+  font-size: clamp(2rem, 4vw, 2.6rem);
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.home-hero p {
+  color: #6a6a6a;
+  margin-bottom: 0;
+}
+
+.product-section {
+  margin-top: 40px;
+}
+
+.section-heading {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #b53636;
+  margin-bottom: 20px;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 18px;
+}
+
+.product-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px 14px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+}
+
+.product-illustration {
+  width: 90px;
+  height: 90px;
+  margin: 0 auto 12px;
+  border-radius: 24px;
+  background: linear-gradient(135deg, #fefefe, #f5f0f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b53636;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.4px;
+}
+
+.product-card h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.product-card .price {
+  color: #b53636;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(181, 54, 54, 0.2);
+  color: #b53636;
+  font-weight: 700;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-card {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.profile-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+}
+
+.profile-card p {
+  color: #555;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
   text-align: start;
 }

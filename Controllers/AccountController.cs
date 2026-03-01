@@ -5,6 +5,8 @@ using System.Security.Claims;
 using ShoeStore.Models;
 using System.Collections.Generic;
 using ShoeStore.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using System.Linq;
 
 namespace ShoeStore.Controllers
 {
@@ -114,11 +116,26 @@ namespace ShoeStore.Controllers
             }
         }
 
+        [Authorize]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             return RedirectToAction("Login");
+        }
+
+        [Authorize]
+        [HttpGet]
+        public IActionResult Profile()
+        {
+            var profile = users.FirstOrDefault(u => u.Username == User.Identity?.Name);
+            if (profile == null)
+            {
+                return RedirectToAction("Login");
+            }
+
+            return View(profile);
         }
 
         [HttpGet]
