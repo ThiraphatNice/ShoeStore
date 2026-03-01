@@ -1,0 +1,21 @@
+https://github.com/ThiraphatNice/ShoeStore.git
+
+git init
+git add .
+git commit -m "first upload file-project commit"
+git branch -M main
+git remote add origin "https://..."
+
+***git remote -v (ใชในการตรวจสอบ origin ที่ทำการเพิ่มเขาไป)***
+***git remote rm origin (ใชในการลบ remote origin)***
+
+git status
+
+***
+git fetch origin
+git push --force-with-lease origin main
+***
+
+git push origin main
+git pull origin main
+
