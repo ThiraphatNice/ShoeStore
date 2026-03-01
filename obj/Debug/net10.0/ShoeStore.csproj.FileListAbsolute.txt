@@ -22,7 +22,6 @@ d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\scopedcss\Views\S
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\scopedcss\bundle\ShoeStore.styles.css
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\scopedcss\projectbundle\ShoeStore.bundle.scp.css
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\otf35sph99-{0}-61n19gt1b8-61n19gt1b8.gz
-d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\duemh6tvc7-{0}-xtxxf3hu2r-xtxxf3hu2r.gz
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\3jc5ygalee-{0}-bqjiyaj88i-bqjiyaj88i.gz
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\f32q9ftksd-{0}-c2jlpeoesf-c2jlpeoesf.gz
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\50w81ge2tz-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -95,4 +94,5 @@ d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.pdb
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.genruntimeconfig.cache
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ref\ShoeStore.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.sourcelink.json
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-qveuym6mxw-qveuym6mxw.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-3ntfozhg0j-3ntfozhg0j.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\duemh6tvc7-{0}-zk5a2jkf5b-zk5a2jkf5b.gz
