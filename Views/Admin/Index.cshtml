@@ -1,0 +1,12 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="container mt-5">
+    <h1>Admin Dashboard</h1>
+    <p>Welcome, Admin. Manage the system here.</p>
+    <ul>
+        <li><a href="@Url.Action("ManageUsers", "Admin")">Manage Users</a></li>
+        <li><a href="@Url.Action("ManageProducts", "Admin")">Manage Products</a></li>
+    </ul>
+</div>

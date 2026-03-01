@@ -1,0 +1,13 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="container mt-5">
+    <div class="text-center">
+        <h1 class="display-4">Welcome to Shoe Store</h1>
+        <p>Hello, @ViewBag.Username! You are logged in as @ViewBag.Role.</p>
+        <form method="post" action="@Url.Action("Logout", "Account")" class="d-inline">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    </div>
+</div>
