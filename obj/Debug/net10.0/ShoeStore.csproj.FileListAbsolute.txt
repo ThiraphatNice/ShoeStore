@@ -94,5 +94,5 @@ d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.pdb
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.genruntimeconfig.cache
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ref\ShoeStore.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.sourcelink.json
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-3ntfozhg0j-3ntfozhg0j.gz
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\duemh6tvc7-{0}-zk5a2jkf5b-zk5a2jkf5b.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-779hl7mcpi-779hl7mcpi.gz
