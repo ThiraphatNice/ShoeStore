@@ -2,7 +2,7 @@ https://github.com/ThiraphatNice/ShoeStore.git
 
 git init
 git add .
-git commit -m "first upload file-project commit"
+git commit -m "Update dd-mm-yyyy-tttt"
 git branch -M main
 git remote add origin "https://..."
 
