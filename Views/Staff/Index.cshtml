@@ -1,11 +1,54 @@
+@model ShoeStore.ViewModels.StaffDashboardViewModel
 @{
     ViewData["Title"] = "Staff Dashboard";
 }
 
-<div class="container mt-5">
-    <h1>Staff Dashboard</h1>
-    <p>Welcome, Staff. Manage orders here.</p>
-    <ul>
-        <li><a href="@Url.Action("ManageOrders", "Staff")">Manage Orders</a></li>
-    </ul>
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="fw-bold">Staff Dashboard</h1>
+            <p class="text-muted">เลือกส่วนงานที่คุณรับผิดชอบและเริ่มจัดการงานได้จากที่นี่</p>
+        </div>
+    </div>
+
+    <div class="row g-4 align-items-end mb-4">
+        <div class="col-md-6">
+            <label for="sectionSelector" class="form-label fw-semibold">เลือกส่วนงาน</label>
+            <select id="sectionSelector" class="form-select">
+                <option value="">-- เลือก --</option>
+                @foreach (var area in Model.Sections)
+                {
+                    <option value="@Url.Action(area.ActionName, "Staff")">@area.DisplayName</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="button" id="goToSection" class="btn btn-primary w-100 mt-3 mt-md-0">ไปยังหน้าจัดการ</button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var area in Model.Sections)
+        {
+            <div class="col-md-6 col-lg-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">@area.DisplayName</h5>
+                        <p class="card-text flex-fill text-muted">@area.Description</p>
+                        <a class="btn btn-outline-primary mt-3" href="@Url.Action(area.ActionName, "Staff")">จัดการ</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<script>
+    document.getElementById('goToSection').addEventListener('click', function () {
+        const select = document.getElementById('sectionSelector');
+        const target = select.value;
+        if (target) {
+            window.location.href = target;
+        }
+    });
+</script>

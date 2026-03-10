@@ -2,8 +2,12 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ShoeStore.ViewModels
 {
-    public class ForgetPasswordViewModel
+    public class CreateStaffViewModel
     {
+        [Required]
+        [Display(Name = "Full name")]
+        public string FullName { get; set; } = string.Empty;
+
         [Required]
         [EmailAddress]
         [Display(Name = "Email")]
@@ -11,13 +15,17 @@ namespace ShoeStore.ViewModels
 
         [Required]
         [DataType(DataType.Password)]
-        [Display(Name = "New password")]
-        public string NewPassword { get; set; } = string.Empty;
+        [Display(Name = "Password")]
+        public string Password { get; set; } = string.Empty;
 
         [Required]
         [DataType(DataType.Password)]
         [Display(Name = "Confirm password")]
-        [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+        [Compare("Password", ErrorMessage = "Passwords do not match")]
         public string ConfirmPassword { get; set; } = string.Empty;
+
+        [Required]
+        [Display(Name = "Role")]
+        public int RoleId { get; set; }
     }
 }

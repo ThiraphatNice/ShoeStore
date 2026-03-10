@@ -74,7 +74,9 @@ namespace ShoeStore.Controllers
                 return View(model);
             }
 
-            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Users");
+            const int defaultUserRoleId = 2;
+            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.Id == defaultUserRoleId) 
+                ?? await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Users");
             if (customerRole == null)
             {
                 ModelState.AddModelError(string.Empty, "Default role 'Users' was not found. Please seed roles first.");
