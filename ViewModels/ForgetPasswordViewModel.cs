@@ -1,9 +1,17 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace ShoeStore.ViewModels
 {
     public class ForgetPasswordViewModel
     {
-        public string Username { get; set; }
-        public string Email { get; set; }
-        public string NewPassword { get; set; }
+        [Required]
+        [EmailAddress]
+        [Display(Name = "Email")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [DataType(DataType.Password)]
+        [Display(Name = "New password")]
+        public string NewPassword { get; set; } = string.Empty;
     }
 }

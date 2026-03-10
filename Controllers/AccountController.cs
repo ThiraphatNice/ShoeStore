@@ -2,23 +2,21 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
-using ShoeStore.Models;
-using System.Collections.Generic;
 using ShoeStore.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using System.Linq;
+using Microsoft.EntityFrameworkCore;
+using ShoeStore.Models.db;
 
 namespace ShoeStore.Controllers
 {
     public class AccountController : Controller
     {
-        // Mock data - in real app, this would be from database
-        private static List<User> users = new List<User>
+        private readonly ShoeStoreContext _context;
+
+        public AccountController(ShoeStoreContext context)
         {
-            new User { Username = "customer1", Password = "123", Email = "customer1@example.com", Role = "Customer" },
-            new User { Username = "staff1", Password = "123", Email = "staff1@example.com", Role = "Staff" },
-            new User { Username = "admin", Password = "123", Email = "admin@example.com", Role = "Admin" }
-        };
+            _context = context;
+        }
 
         [HttpGet]
         public IActionResult Login()
@@ -34,27 +32,25 @@ namespace ShoeStore.Controllers
                 return View(model);
             }
 
-            var user = users.FirstOrDefault(u => u.Username == model.Username && u.Password == model.Password);
-            if (user != null)
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Email == model.Email);
+
+            if (user == null || !PasswordMatches(user.PasswordHash, model.Password))
             {
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, user.Username),
-                    new Claim(ClaimTypes.Role, user.Role)
-                };
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties();
-
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-
-                return RedirectToAction("Index", "Home");
+                ViewBag.Error = "Invalid email or password";
+                return View(model);
             }
-            else
-            {
-                ViewBag.Error = "Invalid username or password";
-                return View();
-            }
+
+            var claims = BuildClaims(user);
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(claimsIdentity),
+                new AuthenticationProperties());
+
+            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
@@ -64,28 +60,40 @@ namespace ShoeStore.Controllers
         }
 
         [HttpPost]
-        public IActionResult Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            if (model.Password != model.ConfirmPassword)
+            var emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email);
+            if (emailExists)
             {
-                ModelState.AddModelError("", "Passwords do not match");
+                ModelState.AddModelError(nameof(model.Email), "Email already exists");
                 return View(model);
             }
 
-            if (users.Any(u => u.Username == model.Username))
+            var customerRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Users");
+            if (customerRole == null)
             {
-                ModelState.AddModelError("", "Username already exists");
+                ModelState.AddModelError(string.Empty, "Default role 'Users' was not found. Please seed roles first.");
                 return View(model);
             }
 
-            users.Add(new User { Username = model.Username, Password = model.Password, Email = model.Email, Role = "Customer" });
+            var newUser = new Models.db.User
+            {
+                Fullname = model.FullName,
+                Email = model.Email,
+                PasswordHash = model.Password,
+                RoleId = customerRole.Id
+            };
+
+            _context.Users.Add(newUser);
+            await _context.SaveChangesAsync();
+
             ViewBag.Success = "Registration successful. Please login.";
-            return View("Login");
+            return View("Login", new LoginViewModel { Email = model.Email });
         }
 
         [HttpGet]
@@ -95,25 +103,25 @@ namespace ShoeStore.Controllers
         }
 
         [HttpPost]
-        public IActionResult ForgetPassword(ForgetPasswordViewModel model)
+        public async Task<IActionResult> ForgetPassword(ForgetPasswordViewModel model)
         {
             if (!ModelState.IsValid)
             {
                 return View(model);
             }
 
-            var user = users.FirstOrDefault(u => u.Username == model.Username && u.Email == model.Email);
-            if (user != null)
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == model.Email);
+            if (user == null)
             {
-                user.Password = model.NewPassword;
-                ViewBag.Success = "Password changed successfully. Please login.";
-                return View("Login");
-            }
-            else
-            {
-                ModelState.AddModelError("", "Username and email do not match");
+                ModelState.AddModelError(string.Empty, "Email not found");
                 return View(model);
             }
+
+            user.PasswordHash = model.NewPassword;
+            await _context.SaveChangesAsync();
+
+            ViewBag.Success = "Password changed successfully. Please login.";
+            return View("Login", new LoginViewModel { Email = model.Email });
         }
 
         [Authorize]
@@ -127,9 +135,18 @@ namespace ShoeStore.Controllers
 
         [Authorize]
         [HttpGet]
-        public IActionResult Profile()
+        public async Task<IActionResult> Profile()
         {
-            var profile = users.FirstOrDefault(u => u.Username == User.Identity?.Name);
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdValue) || !int.TryParse(userIdValue, out var userId))
+            {
+                return RedirectToAction("Login");
+            }
+
+            var profile = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
             if (profile == null)
             {
                 return RedirectToAction("Login");
@@ -142,6 +159,39 @@ namespace ShoeStore.Controllers
         public IActionResult AccessDenied()
         {
             return View();
+        }
+
+        private static bool PasswordMatches(string storedPassword, string providedPassword)
+        {
+            if (string.IsNullOrEmpty(storedPassword))
+            {
+                return false;
+            }
+
+            return storedPassword == providedPassword;
+        }
+
+        private static List<Claim> BuildClaims(Models.db.User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Fullname),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role.RoleName)
+            };
+
+            if (user.Role.RoleName.Contains("Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Admin"));
+            }
+
+            if (user.Role.RoleName.Contains("Staff", StringComparison.OrdinalIgnoreCase))
+            {
+                claims.Add(new Claim(ClaimTypes.Role, "Staff"));
+            }
+
+            return claims;
         }
     }
 }

@@ -160,6 +160,36 @@ CREATE TABLE shipments (
     FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
+ALTER TABLE users
+ADD COLUMN uid VARCHAR(50) UNIQUE AFTER id;
+
+INSERT INTO roles (id, role_name) VALUES
+(1,'Admin'),
+(2,'Users'),
+(3,'Staff Stock'),
+(4,'Staff Manage'),
+(5,'Staff Sell'),
+(6,'Staff Express');
+
+INSERT INTO users 
+(uid, role_id, fullname, email, password_hash, phone, address)
+VALUES
+('ADM-0001',1,'System Admin','admin@shoestore.com','admin123','0800000000','Head Office'),
+
+('USR-0001',2,'Somchai User','somchai@email.com','123456','0811111111','Bangkok'),
+('USR-0002',2,'Suda User','suda@email.com','123456','0822222222','Chiangmai'),
+
+('STK-0001',3,'Stock Staff','stock@shoestore.com','123456','0833333333','Warehouse'),
+
+('MNG-0001',4,'Manager Staff','manager@shoestore.com','123456','0844444444','Head Office'),
+
+('SEL-0001',5,'Sales Staff','sales@shoestore.com','123456','0855555555','Bangkok Shop'),
+
+('EXP-0001',6,'Express Staff','express@shoestore.com','123456','0866666666','Shipping Center');
+
+ALTER TABLE users
+DROP COLUMN uid;
+
 ---------------------------
 
 Package
