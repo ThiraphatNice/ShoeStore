@@ -1,54 +1,73 @@
-@model ShoeStore.ViewModels.StaffDashboardViewModel
+﻿@model ShoeStore.ViewModels.StaffDashboardViewModel
 @{
     ViewData["Title"] = "Staff Dashboard";
 }
 
-<div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-lg-8">
-            <h1 class="fw-bold">Staff Dashboard</h1>
-            <p class="text-muted">เลือกส่วนงานที่คุณรับผิดชอบและเริ่มจัดการงานได้จากที่นี่</p>
-        </div>
-    </div>
-
-    <div class="row g-4 align-items-end mb-4">
-        <div class="col-md-6">
-            <label for="sectionSelector" class="form-label fw-semibold">เลือกส่วนงาน</label>
-            <select id="sectionSelector" class="form-select">
-                <option value="">-- เลือก --</option>
-                @foreach (var area in Model.Sections)
-                {
-                    <option value="@Url.Action(area.ActionName, "Staff")">@area.DisplayName</option>
-                }
-            </select>
-        </div>
-        <div class="col-md-3">
-            <button type="button" id="goToSection" class="btn btn-primary w-100 mt-3 mt-md-0">ไปยังหน้าจัดการ</button>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        @foreach (var area in Model.Sections)
-        {
-            <div class="col-md-6 col-lg-3">
-                <div class="card shadow-sm h-100">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@area.DisplayName</h5>
-                        <p class="card-text flex-fill text-muted">@area.Description</p>
-                        <a class="btn btn-outline-primary mt-3" href="@Url.Action(area.ActionName, "Staff")">จัดการ</a>
+<div class="staff-dashboard container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="staff-card shadow-sm">
+                <div class="dashboard-head">
+                    <div>
+                        <p class="eyebrow text-uppercase">Staff Portal</p>
+                        <h1 class="fw-bold mb-2">Staff Dashboard</h1>
+                        <p class="text-muted mb-0">เลือกส่วนงานที่คุณรับผิดชอบและเริ่มจัดการงานได้จากที่นี่</p>
                     </div>
                 </div>
+                <div class="dashboard-selector mt-4">
+                    <label for="sectionSelector" class="form-label fw-semibold">เลือกส่วนงาน</label>
+                    <div class="selector-row">
+                        <select id="sectionSelector" class="form-select" @(Model.Sections.Any() ? string.Empty : "disabled")>
+                            <option value="">-- เลือกส่วนงาน --</option>
+                            @foreach (var area in Model.Sections)
+                            {
+                                <option value="@Url.Action(area.ActionName, "Staff")">@area.DisplayName</option>
+                            }
+                        </select>
+                        <button type="button" id="goToSection" class="btn btn-auth-primary" @(Model.Sections.Any() ? string.Empty : "disabled")>
+                            ไปหน้าจัดการ
+                        </button>
+                    </div>
+                    <p class="selector-hint text-muted">ระบบจะแสดงเฉพาะหน้าที่ที่คุณได้รับสิทธิ์เท่านั้น</p>
+                </div>
+                @if (Model.Sections.Any())
+                {
+                    <div class="section-pill-group mt-4">
+                        @foreach (var area in Model.Sections)
+                        {
+                            <span class="section-pill">@area.DisplayName</span>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-center text-muted mb-0">ยังไม่มีสิทธิ์เข้าถึงส่วนงานของ Staff</p>
+                }
             </div>
-        }
+        </div>
     </div>
 </div>
 
-<script>
-    document.getElementById('goToSection').addEventListener('click', function () {
-        const select = document.getElementById('sectionSelector');
-        const target = select.value;
-        if (target) {
-            window.location.href = target;
-        }
-    });
-</script>
+@section Scripts {
+    <script>
+        (function () {
+            const select = document.getElementById('sectionSelector');
+            const button = document.getElementById('goToSection');
+            if (!button || !select) {
+                return;
+            }
+
+            button.addEventListener('click', () => {
+                if (!select.value) {
+                    select.classList.add('is-invalid');
+                    return;
+                }
+                window.location.href = select.value;
+            });
+
+            select.addEventListener('change', () => {
+                select.classList.remove('is-invalid');
+            });
+        })();
+    </script>
+}

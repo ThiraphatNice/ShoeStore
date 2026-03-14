@@ -94,7 +94,6 @@ d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.pdb
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.genruntimeconfig.cache
 d:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ref\ShoeStore.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.sourcelink.json
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\duemh6tvc7-{0}-zk5a2jkf5b-zk5a2jkf5b.gz
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\Humanizer.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\Microsoft.Bcl.AsyncInterfaces.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\Microsoft.Build.Locator.dll
@@ -185,4 +184,6 @@ D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\zh-Hans\Microsoft
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.csproj.AssemblyReference.cache
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.csproj.Up2Date
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-56l08nb25w-56l08nb25w.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\duemh6tvc7-{0}-d4tidzdval-d4tidzdval.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-v1ths8dwl6-v1ths8dwl6.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\ipig610ncv-{0}-rcf9rv7pkv-rcf9rv7pkv.gz

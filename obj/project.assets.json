@@ -2016,11 +2016,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
+      "projectUniqueName": "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
       "projectName": "ShoeStore",
-      "projectPath": "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
+      "projectPath": "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
       "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
-      "outputPath": "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\obj\\",
+      "outputPath": "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config"
@@ -2093,7 +2093,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.102/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.104/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.AspNetCore": "(,10.0.32767]",
           "Microsoft.AspNetCore.Antiforgery": "(,10.0.32767]",

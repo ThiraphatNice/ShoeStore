@@ -1,0 +1,81 @@
+﻿@model ShoeStore.ViewModels.Home.HomeSectionViewModel
+@using System.Globalization
+@using System.Text.Json
+@{
+    var camelOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+@if (Model?.Products == null || !Model.Products.Any())
+{
+    <text></text>
+}
+else
+{
+    <section class="product-section" data-grid-collapse="4">
+        <div class="section-header">
+            <h2 class="section-heading">@Model.Title</h2>
+        </div>
+        <div class="product-rail">
+            <div class="product-grid">
+                @foreach (var product in Model.Products)
+                {
+                    var basePrice = product.Price.ToString("F2", CultureInfo.InvariantCulture);
+                    var finalPrice = product.DiscountPercent > 0
+                        ? product.FinalPrice.ToString("F2", CultureInfo.InvariantCulture)
+                        : string.Empty;
+                    var sizeList = string.Join("|", product.SizeOptions);
+                    var colorList = string.Join("|", product.ColorOptions);
+                    var variantsJson = JsonSerializer.Serialize(product.Variants, camelOptions);
+                    <article class="product-card"
+                             tabindex="0"
+                             data-product-id="@product.Id"
+                             data-product-name="@product.Name"
+                             data-product-category="@product.Category"
+                             data-product-description="@product.Description"
+                             data-product-price="@basePrice"
+                             data-product-sale="@finalPrice"
+                             data-product-sku="@product.Sku"
+                             data-product-color="@product.PrimaryColor"
+                             data-product-stock="@product.TotalStock"
+                             data-product-discount="@product.DiscountPercent"
+                             data-product-image="@product.ImageUrl"
+                             data-product-sizes="@sizeList"
+                             data-product-colors="@colorList"
+                             data-product-variants='@variantsJson'>
+                        @if (product.IsLimited)
+                        {
+                            <span class="product-badge">Limited</span>
+                        }
+                        <div class="product-media">
+                            <img src="@product.ImageUrl" alt="@product.Name shoe photo" loading="lazy" />
+                        </div>
+                        <div class="product-info">
+                            <p class="product-meta">@product.Category</p>
+                            <h3 class="product-name">@product.Name</h3>
+                            @if (!string.IsNullOrWhiteSpace(product.Description))
+                            {
+                                <p class="product-desc">@product.Description</p>
+                            }
+                            @if (product.DiscountPercent > 0)
+                            {
+                                <div class="price price--sale">
+                                    <span class="current">@product.FinalPriceDisplay</span>
+                                    <span class="original">@product.PriceDisplay</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="price">@product.PriceDisplay</div>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+            <button type="button" class="grid-arrow" aria-label="เลื่อนดูสินค้าถัดไป">
+                <span>&rsaquo;</span>
+            </button>
+        </div>
+        <button type="button" class="mobile-more-btn">More</button>
+    </section>
+}
+

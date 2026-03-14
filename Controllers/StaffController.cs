@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShoeStore.Models.db;
 using ShoeStore.ViewModels;
+using ShoeStore.ViewModels.Stock;
 using System.Security.Claims;
 
 namespace ShoeStore.Controllers
@@ -74,14 +75,28 @@ namespace ShoeStore.Controllers
             return View(model);
         }
 
-        public IActionResult Stock()
+        public async Task<IActionResult> Stock()
         {
             if (!CanAccessSection("Staff Stock"))
             {
                 return Forbid();
             }
 
-            return View();
+            var categories = await _context.Categories
+                .OrderBy(c => c.CategoryName)
+                .Select(c => new SelectListItem
+                {
+                    Value = c.Id.ToString(),
+                    Text = c.CategoryName
+                })
+                .ToListAsync();
+
+            var model = new StockPageViewModel
+            {
+                Categories = categories
+            };
+
+            return View(model);
         }
 
         public IActionResult ManageOrders()
@@ -188,6 +203,197 @@ namespace ShoeStore.Controllers
             return User.IsInRole("Admin") || User.IsInRole(roleName);
         }
 
+        [Authorize(Roles = "Admin,Staff Stock")]
+        [HttpGet]
+        public async Task<IActionResult> GetProductDetail(int id)
+        {
+            var product = await _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.ProductVariants)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (product == null)
+            {
+                return Json(new { success = false, message = "ไม่พบข้อมูลสินค้าที่ค้นหา" });
+            }
+
+            var response = new ProductDetailResponse
+            {
+                Id = product.Id,
+                Name = product.ProductName,
+                Description = product.Description,
+                Price = product.Price,
+                DiscountPercent = product.DiscountPercent ?? 0m,
+                CategoryId = product.CategoryId,
+                CategoryName = product.Category.CategoryName,
+                Variants = product.ProductVariants
+                    .OrderBy(v => v.Size)
+                    .ThenBy(v => v.Color)
+                    .Select(v => new ProductVariantViewModel
+                    {
+                        Id = v.Id,
+                        Size = v.Size,
+                        Color = v.Color,
+                        StockQuantity = v.StockQuantity ?? 0
+                    })
+                    .ToList()
+            };
+
+            return Json(new { success = true, data = response });
+        }
+
+        [Authorize(Roles = "Admin,Staff Stock")]
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UpdateProductInfo([FromBody] UpdateProductRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
+            }
+
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId);
+            if (product == null)
+            {
+                return Json(new { success = false, message = "ไม่พบสินค้า" });
+            }
+
+            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
+            if (!categoryExists)
+            {
+                return Json(new { success = false, message = "หมวดหมู่ไม่ถูกต้อง" });
+            }
+
+            product.ProductName = request.Name;
+            product.Description = request.Description;
+            product.Price = request.Price;
+            product.DiscountPercent = request.DiscountPercent;
+            product.CategoryId = request.CategoryId;
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [Authorize(Roles = "Admin,Staff Stock")]
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UpdateVariantStock([FromBody] UpdateVariantStockRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+            }
+
+            var variant = await _context.ProductVariants
+                .FirstOrDefaultAsync(v => v.ProductId == request.ProductId &&
+                                          v.Size == request.Size &&
+                                          v.Color == request.Color);
+
+            if (variant == null)
+            {
+                return Json(new { success = false, message = "ไม่พบรายการไซส์/สีนี้" });
+            }
+
+            variant.StockQuantity = request.Quantity;
+            await _context.SaveChangesAsync();
+            await RefreshStockTotal(request.ProductId);
+
+            return Json(new { success = true });
+        }
+
+        [Authorize(Roles = "Admin,Staff Stock")]
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> AddVariant([FromBody] AddVariantRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+            }
+
+            var exists = await _context.ProductVariants.AnyAsync(v =>
+                v.ProductId == request.ProductId &&
+                v.Size == request.Size &&
+                v.Color == request.Color);
+
+            if (exists)
+            {
+                return Json(new { success = false, message = "รายการไซส์/สีนี้มีอยู่แล้ว" });
+            }
+
+            var variant = new ProductVariant
+            {
+                ProductId = request.ProductId,
+                Size = request.Size,
+                Color = request.Color,
+                StockQuantity = 0
+            };
+
+            _context.ProductVariants.Add(variant);
+            await _context.SaveChangesAsync();
+            await RefreshStockTotal(request.ProductId);
+
+            return Json(new { success = true });
+        }
+
+        [Authorize(Roles = "Admin,Staff Stock")]
+        [HttpGet]
+        public async Task<IActionResult> ListInventory()
+        {
+            var data = await _context.Products
+                .AsNoTracking()
+                .Include(p => p.Category)
+                .OrderBy(p => p.ProductName)
+                .Take(100)
+                .Select(p => new InventoryRowViewModel
+                {
+                    Id = p.Id,
+                    Name = p.ProductName,
+                    Category = p.Category.CategoryName,
+                    Price = p.Price,
+                    DiscountPercent = p.DiscountPercent ?? 0m,
+                    StockTotal = p.StockTotal,
+                    IsLimited = p.IsLimited
+                })
+                .ToListAsync();
+
+            return Json(new { success = true, data });
+        }
+
+        [Authorize(Roles = "Admin,Staff Stock")]
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+            }
+
+            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
+            if (!categoryExists)
+            {
+                return Json(new { success = false, message = "หมวดหมู่ไม่ถูกต้อง" });
+            }
+
+            var product = new Product
+            {
+                ProductName = request.Name,
+                Description = request.Description,
+                Price = request.Price,
+                DiscountPercent = request.DiscountPercent,
+                CategoryId = request.CategoryId,
+                IsLimited = false,
+                StockTotal = 0,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Products.Add(product);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, id = product.Id });
+        }
+
         private IEnumerable<StaffSectionOption> GetSectionsForCurrentUser()
         {
             if (User.IsInRole("Admin"))
@@ -216,6 +422,20 @@ namespace ShoeStore.Controllers
                     Text = r.RoleName
                 })
                 .ToListAsync();
+        }
+
+        private async Task RefreshStockTotal(int productId)
+        {
+            var total = await _context.ProductVariants
+                .Where(v => v.ProductId == productId)
+                .SumAsync(v => v.StockQuantity ?? 0);
+
+            var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == productId);
+            if (product != null)
+            {
+                product.StockTotal = total;
+                await _context.SaveChangesAsync();
+            }
         }
     }
 }

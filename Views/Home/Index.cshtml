@@ -1,38 +1,14 @@
-@using System.Globalization
+﻿@model ShoeStore.ViewModels.Home.HomePageViewModel
+@using ShoeStore.ViewModels.Home
 @{
     ViewData["Title"] = "Home Page";
-    Func<decimal, string> formatPrice = price => $"{price:N0}.-";
-
-    var topSales = new[]
-    {
-        new { Sku = "TS-001", Name = "Shoes No.01 (Black)", Color = "Black", Price = 6500m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1504198453319-5ce911bafcde?auto=format&fit=crop&w=600&q=80", Stock = 18, Sizes = new[] { "US 6", "US 7", "US 8", "US 9" } },
-        new { Sku = "TS-002", Name = "Shoes No.02 (White)", Color = "White", Price = 5990m, SalePrice = (decimal?)5590m, Image = "https://images.unsplash.com/photo-1515541965486-30939b2fb0eb?auto=format&fit=crop&w=600&q=80", Stock = 10, Sizes = new[] { "US 5", "US 6", "US 7", "US 8" } },
-        new { Sku = "TS-003", Name = "Shoes No.03 (Gray)", Color = "Gray", Price = 6250m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1483721310020-03333e577078?auto=format&fit=crop&w=600&q=80", Stock = 7, Sizes = new[] { "US 7", "US 8", "US 9" } },
-        new { Sku = "TS-004", Name = "Shoes No.04 (Blue)", Color = "Blue", Price = 6750m, SalePrice = (decimal?)6390m, Image = "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=600&q=80", Stock = 12, Sizes = new[] { "US 6", "US 7", "US 8", "US 9" } },
-        new { Sku = "TS-005", Name = "Shoes No.05 (Red)", Color = "Red", Price = 6150m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1528701800489-20be3c18c959?auto=format&fit=crop&w=600&q=80", Stock = 9, Sizes = new[] { "US 6", "US 7", "US 8" } },
-        new { Sku = "TS-006", Name = "Shoes No.06 (Green)", Color = "Olive", Price = 5890m, SalePrice = (decimal?)5490m, Image = "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80", Stock = 11, Sizes = new[] { "US 7", "US 8", "US 9", "US 10" } },
-        new { Sku = "TS-007", Name = "Shoes No.07 (Cream)", Color = "Cream", Price = 6090m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80", Stock = 5, Sizes = new[] { "US 5", "US 6", "US 7" } },
-        new { Sku = "TS-008", Name = "Shoes No.08 (Navy)", Color = "Navy", Price = 6990m, SalePrice = (decimal?)6590m, Image = "https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=600&q=80", Stock = 6, Sizes = new[] { "US 8", "US 9", "US 10" } }
-    };
-
-    var sportShoes = new[]
-    {
-        new { Sku = "SS-101", Name = "Runner Max", Color = "Graphite", Price = 4900m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1529927066849-64746792b8d5?auto=format&fit=crop&w=600&q=80", Stock = 20, Sizes = new[] { "US 7", "US 8", "US 9", "US 10" } },
-        new { Sku = "SS-102", Name = "Velocity", Color = "Silver", Price = 5200m, SalePrice = (decimal?)4850m, Image = "https://images.unsplash.com/photo-1491553895911-0055eca6402d?auto=format&fit=crop&w=600&q=80", Stock = 16, Sizes = new[] { "US 6", "US 7", "US 8" } },
-        new { Sku = "SS-103", Name = "Ultra Boost", Color = "White/Black", Price = 5650m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=600&q=80", Stock = 13, Sizes = new[] { "US 8", "US 9", "US 10" } },
-        new { Sku = "SS-104", Name = "FlyLight", Color = "Teal", Price = 4750m, SalePrice = (decimal?)4490m, Image = "https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?auto=format&fit=crop&w=600&q=80", Stock = 8, Sizes = new[] { "US 6", "US 7", "US 8", "US 9" } },
-        new { Sku = "SS-105", Name = "Sprint LX", Color = "Red/Black", Price = 5050m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=600&q=80", Stock = 15, Sizes = new[] { "US 7", "US 8", "US 9" } },
-        new { Sku = "SS-106", Name = "Trail Motion", Color = "Forest", Price = 5400m, SalePrice = (decimal?)4990m, Image = "https://images.unsplash.com/photo-1504609813442-a8924e83f76e?auto=format&fit=crop&w=600&q=80", Stock = 14, Sizes = new[] { "US 8", "US 9", "US 10", "US 11" } },
-        new { Sku = "SS-107", Name = "Aero Flux", Color = "Royal", Price = 5120m, SalePrice = (decimal?)null, Image = "https://images.unsplash.com/photo-1434056886845-dac89ffe9b56?auto=format&fit=crop&w=600&q=80", Stock = 10, Sizes = new[] { "US 6", "US 7", "US 8" } },
-        new { Sku = "SS-108", Name = "Pace Runner", Color = "Black/White", Price = 5580m, SalePrice = (decimal?)5290m, Image = "https://images.unsplash.com/photo-1528701800489-20be3c18c959?auto=format&fit=crop&w=600&q=80", Stock = 9, Sizes = new[] { "US 8", "US 9", "US 10" } }
-    };
 }
 
 <section class="home-hero">
     <h1>Welcome to Shoes Store</h1>
-    @if (User.Identity?.IsAuthenticated ?? false)
+    @if (!string.IsNullOrEmpty(Model.Username))
     {
-        <p>Hello, @User.Identity!.Name! Enjoy the latest drops tailored for you.</p>
+        <p>Hello, @Model.Username! Enjoy the latest drops tailored for you.</p>
     }
     else
     {
@@ -40,131 +16,69 @@
     }
 </section>
 
-<section class="product-section" data-grid-collapse="4">
-    <div class="section-header">
-        <h2 class="section-heading">Top Sales</h2>
-    </div>
-    <div class="product-rail">
-        <div class="product-grid" data-product-grid>
-            @foreach (var item in topSales)
-            {
-                <article class="product-card"
-                         role="button"
-                         tabindex="0"
-                         data-product-category="Top Sales"
-                         data-product-sku="@item.Sku"
-                         data-product-name="@item.Name"
-                         data-product-color="@item.Color"
-                         data-product-stock="@item.Stock"
-                         data-product-price="@item.Price"
-                         data-product-sale="@(item.SalePrice?.ToString() ?? string.Empty)"
-                         data-product-image="@item.Image"
-                         data-product-sizes="@string.Join("|", item.Sizes)">
-                    <div class="product-illustration">Shoe</div>
-                    <h3>@item.Name</h3>
-                    <p class="product-meta">@item.Color</p>
-                    @if (item.SalePrice.HasValue)
-                    {
-                        <div class="price price--sale">
-                            <span class="current">@formatPrice(item.SalePrice.Value)</span>
-                            <span class="original">@formatPrice(item.Price)</span>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="price">@formatPrice(item.Price)</div>
-                    }
-                </article>
-            }
-        </div>
-        <button type="button" class="grid-arrow" aria-label="ดูสินค้าถัดไป">
-            <span>&rsaquo;</span>
-        </button>
-    </div>
-    <button type="button" class="mobile-more-btn">More</button>
-</section>
+@if (Model.FeaturedProducts.Any())
+{
+    var featuredSection = new HomeSectionViewModel
+    {
+        Title = "Hot Deals",
+        Products = Model.FeaturedProducts
+    };
+    @await Html.PartialAsync("_ProductSection", featuredSection)
+}
 
-<section class="product-section" data-grid-collapse="4">
-    <div class="section-header">
-        <h2 class="section-heading">Sport Shoes</h2>
-    </div>
-    <div class="product-rail">
-        <div class="product-grid" data-product-grid>
-            @foreach (var item in sportShoes)
-            {
-                <article class="product-card"
-                         role="button"
-                         tabindex="0"
-                         data-product-category="Sport Shoes"
-                         data-product-sku="@item.Sku"
-                         data-product-name="@item.Name"
-                         data-product-color="@item.Color"
-                         data-product-stock="@item.Stock"
-                         data-product-price="@item.Price"
-                         data-product-sale="@(item.SalePrice?.ToString() ?? string.Empty)"
-                         data-product-image="@item.Image"
-                         data-product-sizes="@string.Join("|", item.Sizes)">
-                    <div class="product-illustration">Run</div>
-                    <h3>@item.Name</h3>
-                    <p class="product-meta">@item.Color</p>
-                    @if (item.SalePrice.HasValue)
-                    {
-                        <div class="price price--sale">
-                            <span class="current">@formatPrice(item.SalePrice.Value)</span>
-                            <span class="original">@formatPrice(item.Price)</span>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="price">@formatPrice(item.Price)</div>
-                    }
-                </article>
-            }
-        </div>
-        <button type="button" class="grid-arrow" aria-label="ดูสินค้าถัดไป">
-            <span>&rsaquo;</span>
-        </button>
-    </div>
-    <button type="button" class="mobile-more-btn">More</button>
-</section>
+@if (Model.LimitedProducts.Any())
+{
+    var limitedSection = new HomeSectionViewModel
+    {
+        Title = "Limited Edition Spotlight",
+        Products = Model.LimitedProducts
+    };
+    @await Html.PartialAsync("_ProductSection", limitedSection)
+}
+
+@foreach (var section in Model.CategorySections)
+{
+    @await Html.PartialAsync("_ProductSection", section)
+}
 
 <div class="product-modal" id="productModal" aria-hidden="true">
     <div class="product-modal__backdrop" data-modal-close></div>
-    <div class="product-modal__dialog" role="dialog" aria-modal="true">
-        <button type="button" class="modal-close" aria-label="Close" data-modal-close>&times;</button>
+    <div class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalProductName">
+        <button class="modal-close" type="button" data-modal-close aria-label="Close">&times;</button>
         <div class="modal-body">
             <div class="modal-left">
                 <div class="modal-image">
                     <img id="modalProductImage" src="" alt="Selected shoe" />
                 </div>
-                <div class="modal-control">
-                    <label for="modalSize">เลือกไซส์</label>
-                    <div class="select-wrapper">
-                        <select id="modalSize"></select>
-                    </div>
+                <div class="modal-control select-wrapper">
+                    <label for="modalSize" class="form-label">เลือกไซส์</label>
+                    <select id="modalSize" class="form-select"></select>
                 </div>
                 <div class="modal-control">
-                    <label>จำนวน</label>
+                    <label class="form-label">จำนวน</label>
                     <div class="qty-control">
-                        <button type="button" class="qty-btn" data-qty-action="minus">-</button>
-                        <input type="text" id="modalQuantity" value="1" readonly inputmode="numeric" />
-                        <button type="button" class="qty-btn" data-qty-action="plus">+</button>
+                        <button class="qty-btn" type="button" data-qty-action="minus">-</button>
+                        <input id="modalQuantity" type="text" value="1" readonly>
+                        <button class="qty-btn" type="button" data-qty-action="plus">+</button>
                     </div>
                 </div>
             </div>
             <div class="modal-right">
+                <p class="text-muted mb-1">รหัสสินค้า: <span id="modalSku"></span></p>
                 <h3 id="modalProductName"></h3>
+                <p class="modal-description" id="modalDescription"></p>
                 <ul class="modal-meta">
-                    <li><span>รหัสสินค้า:</span> <strong id="modalSku"></strong></li>
-                    <li><span>สี:</span> <strong id="modalColor"></strong></li>
-                    <li><span>สต็อกคงเหลือ:</span> <strong id="modalStock"></strong></li>
+                    <li><span>สี</span><strong id="modalColor"></strong></li>
+                    <li><span>สต็อก</span><strong id="modalStock"></strong></li>
+                    <li><span>หมวดหมู่</span><strong id="modalCategory"></strong></li>
                 </ul>
                 <div class="modal-price">
-                    <span class="modal-price__original" id="modalOriginalPrice"></span>
                     <span class="modal-price__current" id="modalCurrentPrice"></span>
+                    <span class="modal-price__original" id="modalOriginalPrice"></span>
                 </div>
-                <button type="button" class="btn btn-danger add-to-cart-btn">เพิ่มสินค้าในตะกร้า</button>
+                <button class="btn btn-auth-primary add-to-cart-btn" type="button">เพิ่มสินค้าในตะกร้า</button>
             </div>
         </div>
     </div>
 </div>
+

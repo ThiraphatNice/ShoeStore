@@ -1,41 +1,198 @@
+﻿@model ShoeStore.ViewModels.Stock.StockPageViewModel
 @{
     ViewData["Title"] = "Stock Control";
 }
 
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-8">
-            <h1 class="fw-bold">Stock Control</h1>
-            <p class="text-muted">อัปเดตสินค้าคงคลัง ตรวจสอบจำนวนรองเท้าแตะและรองเท้าผ้าใบแบบ real-time</p>
+<div class="stock-page container py-5">
+    <div class="stock-hero card border-0 shadow-sm p-4 mb-4">
+        <p class="eyebrow text-uppercase mb-1">Warehouse</p>
+        <h1 class="fw-bold mb-2">Stock Control</h1>
+        <p class="text-muted mb-0">อัปเดตสินค้าคงคลังและตรวจสอบจำนวนสินค้าแบบ Real-time ได้จากที่นี่</p>
+    </div>
+
+    <div class="row g-4 stock-grid">
+        <div class="col-md-6 col-xl-4">
+            <article class="stock-panel">
+                <h3>ค้นหารหัสสินค้า</h3>
+                <p class="text-muted">กรอกรหัสสินค้า (เช่น 1, 2, 3) เพื่อแก้ไขรายละเอียดและสต็อก</p>
+                <div class="stock-input-group">
+                    <input type="number" class="form-control" id="stockProductIdInput" placeholder="กรอกรหัสสินค้า..." min="1" />
+                    <button class="btn btn-auth-primary" id="searchProductBtn">ค้นหาสินค้า</button>
+                </div>
+            </article>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <article class="stock-panel">
+                <h3>ดูรายการสินค้า</h3>
+                <p class="text-muted">ตรวจสอบสินค้าคงคลังทั้งหมดพร้อมจำนวนสต็อกล่าสุด</p>
+                <button class="btn btn-stock-ghost" id="openInventoryBtn">ดูรายการสินค้า</button>
+            </article>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <article class="stock-panel">
+                <h3>เพิ่มสินค้าใหม่</h3>
+                <p class="text-muted">ลงข้อมูลสินค้าใหม่พร้อมรายละเอียดราคาและหมวดหมู่</p>
+                <button class="btn btn-stock-ghost" id="openNewProductBtn">เพิ่มสินค้าใหม่</button>
+            </article>
         </div>
     </div>
-    <div class="row g-4 mt-2">
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">รับสินค้าเข้า</h5>
-                    <p class="card-text">บันทึกสินค้าเข้าใหม่ตามไซซ์/สี พร้อมสร้างเอกสารอ้างอิงการรับสินค้า</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+</div>
+
+<div class="stock-modal" id="productModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog stock-modal__dialog--wide">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <h4 class="fw-bold mb-3">แก้ไขข้อมูลสินค้า</h4>
+                <div class="mb-3">
+                    <label class="form-label">ชื่อสินค้า</label>
+                    <input type="text" class="form-control" id="productNameInput" />
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">ปรับยอดคงเหลือ</h5>
-                    <p class="card-text">ตรวจนับสินค้าจริงเทียบกับระบบและบันทึกผลต่างเพื่อให้ข้อมูลถูกต้อง</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+                <div class="mb-3">
+                    <label class="form-label">คำอธิบาย</label>
+                    <textarea class="form-control" id="productDescriptionInput" rows="3"></textarea>
                 </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <label class="form-label">ราคาปกติ (บาท)</label>
+                        <input type="number" class="form-control" id="productPriceInput" min="0" step="0.01" />
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label">ส่วนลด (%)</label>
+                        <input type="number" class="form-control" id="productDiscountInput" min="0" max="100" step="0.5" />
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">หมวดหมู่สินค้า</label>
+                    <select class="form-select" id="productCategorySelect">
+                        @foreach (var option in Model.Categories)
+                        {
+                            <option value="@option.Value">@option.Text</option>
+                        }
+                    </select>
+                </div>
+                <button class="btn btn-stock-primary mt-4" id="updateProductBtn">แก้ไขข้อมูล</button>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">แจ้งเตือนสินค้าใกล้หมด</h5>
-                    <p class="card-text">ดูรายงานสินค้าคงเหลือที่อยู่ในระดับแจ้งเตือนและวางแผนเติมสินค้า</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+            <div class="col-lg-6">
+                <div class="modal-section mb-4">
+                    <h4 class="fw-bold mb-3">อัปเดตสต็อก</h4>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-4">
+                            <label class="form-label">ไซส์</label>
+                            <select class="form-select" id="variantSizeSelect"></select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label">สี</label>
+                            <select class="form-select" id="variantColorSelect"></select>
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label">จำนวนคงเหลือ</label>
+                            <input type="number" class="form-control" id="variantQuantityInput" min="0" />
+                        </div>
+                    </div>
+                    <button class="btn btn-auth-primary mt-3" id="updateVariantBtn">อัปเดตสต็อก</button>
+                </div>
+                <div class="modal-section">
+                    <h4 class="fw-bold mb-3">เพิ่มไซส์/สีใหม่</h4>
+                    <div class="row g-3 align-items-end">
+                        <div class="col-sm-4">
+                            <label class="form-label">ไซส์ใหม่</label>
+                            <input type="text" class="form-control" id="newSizeInput" placeholder="เช่น 41" />
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label">สีใหม่</label>
+                            <input type="text" class="form-control" id="newColorInput" placeholder="เช่น White" />
+                        </div>
+                        <div class="col-sm-4">
+                            <button class="btn btn-stock-ghost w-100" id="addVariantBtn">เพิ่มรายการใหม่</button>
+                        </div>
+                    </div>
+                    <small class="text-muted d-block mt-2">รายการใหม่จะถูกสร้างพร้อมจำนวนสต็อกเริ่มต้น 0 คู่</small>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="stock-modal" id="inventoryModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog stock-modal__dialog--wide">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-3">รายการสินค้าทั้งหมด</h4>
+        <div class="table-responsive stock-table-wrapper">
+            <table class="table table-hover" id="inventoryTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>สินค้า</th>
+                        <th>หมวดหมู่</th>
+                        <th>ราคา</th>
+                        <th>ส่วนลด</th>
+                        <th>สต็อก</th>
+                        <th>Limited</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="stock-modal" id="newProductModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-3">เพิ่มสินค้าใหม่</h4>
+        <div class="mb-3">
+            <label class="form-label">ชื่อสินค้า</label>
+            <input type="text" class="form-control" id="createNameInput" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">คำอธิบาย</label>
+            <textarea class="form-control" id="createDescriptionInput" rows="3"></textarea>
+        </div>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="form-label">ราคา (บาท)</label>
+                <input type="number" class="form-control" id="createPriceInput" min="0" step="0.01" />
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label">ส่วนลด (%)</label>
+                <input type="number" class="form-control" id="createDiscountInput" min="0" max="100" step="0.5" />
+            </div>
+        </div>
+        <div class="mt-3">
+            <label class="form-label">หมวดหมู่สินค้า</label>
+            <select class="form-select" id="createCategorySelect">
+                @foreach (var option in Model.Categories)
+                {
+                    <option value="@option.Value">@option.Text</option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-auth-primary mt-4" id="createProductBtn">บันทึกสินค้า</button>
+    </div>
+</div>
+
+<div class="stock-modal stock-modal--alert" id="alertModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog">
+        <p id="alertMessage" class="mb-0"></p>
+        <button class="btn btn-stock-ghost mt-3" data-close>ปิดหน้าต่าง</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.stockApi = {
+            getProduct: '@Url.Action("GetProductDetail", "Staff")',
+            updateProduct: '@Url.Action("UpdateProductInfo", "Staff")',
+            updateVariant: '@Url.Action("UpdateVariantStock", "Staff")',
+            addVariant: '@Url.Action("AddVariant", "Staff")',
+            listInventory: '@Url.Action("ListInventory", "Staff")',
+            createProduct: '@Url.Action("CreateProduct", "Staff")'
+        };
+    </script>
+    <script src="~/js/staff-stock.js" asp-append-version="true"></script>
+}
