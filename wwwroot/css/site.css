@@ -167,19 +167,25 @@ body {
 
 .product-media {
   width: 100%;
-  min-height: 150px;
+  aspect-ratio: 1 / 1;
   border-radius: 20px;
   background: radial-gradient(circle at top, #fff6f3, #f6dcdc);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px;
+  overflow: hidden;
 }
 
 .product-media img {
   width: 100%;
-  max-height: 140px;
+  height: 100%;
   object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.product-media img:hover {
+  transform: scale(1.02);
 }
 
 .product-info {

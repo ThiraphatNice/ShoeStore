@@ -382,6 +382,7 @@ namespace ShoeStore.Controllers
             {
                 ProductName = request.Name,
                 Description = request.Description,
+                ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim(),
                 Price = request.Price,
                 DiscountPercent = request.DiscountPercent,
                 CategoryId = request.CategoryId,

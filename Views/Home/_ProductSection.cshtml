@@ -26,6 +26,8 @@ else
                     var sizeList = string.Join("|", product.SizeOptions);
                     var colorList = string.Join("|", product.ColorOptions);
                     var variantsJson = JsonSerializer.Serialize(product.Variants, camelOptions);
+                    var fallbackImage = Url.Content("~/img/placeholder-shoe.svg");
+                    var displayImage = string.IsNullOrWhiteSpace(product.ImageUrl) ? fallbackImage : product.ImageUrl;
                     <article class="product-card"
                              tabindex="0"
                              data-product-id="@product.Id"
@@ -38,7 +40,7 @@ else
                              data-product-color="@product.PrimaryColor"
                              data-product-stock="@product.TotalStock"
                              data-product-discount="@product.DiscountPercent"
-                             data-product-image="@product.ImageUrl"
+                             data-product-image="@displayImage"
                              data-product-sizes="@sizeList"
                              data-product-colors="@colorList"
                              data-product-variants='@variantsJson'>
@@ -47,7 +49,10 @@ else
                             <span class="product-badge">Limited</span>
                         }
                         <div class="product-media">
-                            <img src="@product.ImageUrl" alt="@product.Name shoe photo" loading="lazy" />
+                            <img src="@displayImage"
+                                 alt="@product.Name shoe photo"
+                                 loading="lazy"
+                                 onerror="this.onerror=null;this.src='@fallbackImage';" />
                         </div>
                         <div class="product-info">
                             <p class="product-meta">@product.Category</p>

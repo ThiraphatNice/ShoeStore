@@ -109,6 +109,7 @@
       getElement('productPriceInput').value = data.price ?? 0;
       getElement('productDiscountInput').value = data.discountPercent ?? 0;
       getElement('productCategorySelect').value = data.categoryId ?? '';
+      getElement('productImageInput').value = data.imageUrl ?? '';
 
       populateVariants();
       openModal(modals.product);
@@ -130,6 +131,7 @@
       price: Number(getElement('productPriceInput').value),
       discountPercent: Number(getElement('productDiscountInput').value),
       categoryId: Number(getElement('productCategorySelect').value),
+      imageUrl: getElement('productImageInput').value.trim(),
     };
 
     if (!payload.name || Number.isNaN(payload.price) || Number.isNaN(payload.discountPercent) || !payload.categoryId) {
@@ -276,6 +278,7 @@
       price: Number(getElement('createPriceInput').value),
       discountPercent: Number(getElement('createDiscountInput').value),
       categoryId: Number(getElement('createCategorySelect').value),
+      imageUrl: getElement('createImageInput').value.trim(),
     };
 
     if (
@@ -306,6 +309,7 @@
       getElement('createDescriptionInput').value = '';
       getElement('createPriceInput').value = '';
       getElement('createDiscountInput').value = '';
+      getElement('createImageInput').value = '';
       const categorySelect = getElement('createCategorySelect');
       if (categorySelect) {
         categorySelect.selectedIndex = 0;

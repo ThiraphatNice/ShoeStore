@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Shoe placeholder">
+  <defs>
+    <linearGradient id="shoeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe0e0" />
+      <stop offset="100%" stop-color="#f5b5b5" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="24" fill="url(#shoeGradient)" />
+  <path d="M20 72c16 0 28-10 40-22 8 10 18 21 32 24 5 1 11 2 11 7 0 3-2 6-5 8-5 3-14 4-36 4s-31-1-38-4c-4-2-6-5-6-9 0-5 1-8 2-8z" fill="#b53636" />
+  <path d="M23 65c6 2 19-4 24-9 1-1 2-2 3-2 2 0 5 3 8 6 8 8 18 12 30 12" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" />
+  <circle cx="38" cy="84" r="6" fill="#fff"/>
+  <circle cx="82" cy="84" r="6" fill="#fff"/>
+</svg>
