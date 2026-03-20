@@ -1,0 +1,142 @@
+@model ShoeStore.ViewModels.Staff.StaffManagerPageViewModel
+@using System.Text.Json
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    ViewData["Title"] = "Manage Users";
+    var roleOptions = Model.RoleOptions ?? Enumerable.Empty<SelectListItem>();
+    var rolesJson = JsonSerializer.Serialize(roleOptions.Select(r => new { value = r.Value, text = r.Text }));
+}
+
+<div class="stock-page container py-5">
+    <div class="stock-hero card border-0 shadow-sm p-4 mb-4">
+        <p class="eyebrow text-uppercase mb-1">Staff Manager</p>
+        <h1 class="fw-bold mb-2">User Control Center</h1>
+        <p class="text-muted mb-0">จัดการบัญชีผู้ใช้งานทั้งหมดได้จากที่นี่ ยกเว้น Admin ที่สงวนสิทธิ์ไว้เท่านั้น</p>
+    </div>
+
+    <div class="row g-4 stock-grid">
+        <div class="col-md-6 col-xl-4">
+            <article class="stock-panel">
+                <h3>ดูรายชื่อผู้ใช้</h3>
+                <p class="text-muted">ตรวจสอบรายละเอียดผู้ใช้ทุกกลุ่ม พร้อมสิทธิ์การใช้งานและข้อมูลติดต่อ</p>
+                <button class="btn btn-stock-ghost" id="openUserDirectoryBtn">ดูรายชื่อผู้ใช้งาน</button>
+            </article>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <article class="stock-panel">
+                <h3>คำแนะนำ</h3>
+                <p class="text-muted">เลือกผู้ใช้ที่ต้องการแก้ไขหรือกดลบได้จากตารางโดยตรง ระบบจะป้องกันบัญชี Admin ให้อัตโนมัติ</p>
+                <button class="btn btn-auth-primary" id="refreshUserListBtn">รีเฟรชข้อมูลล่าสุด</button>
+            </article>
+        </div>
+    </div>
+</div>
+
+<div class="stock-modal" id="userDirectoryModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog stock-modal__dialog--wide">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-3">รายชื่อผู้ใช้งานทั้งหมด</h4>
+        <div class="table-responsive stock-table-wrapper">
+            <table class="table table-hover" id="managedUsersTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Role Id</th>
+                        <th>Role</th>
+                        <th>Fullname</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="stock-modal" id="editUserModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-3">แก้ไขข้อมูลผู้ใช้</h4>
+        <input type="hidden" id="editUserId" />
+        <div class="mb-3">
+            <label class="form-label">สิทธิ์การใช้งาน</label>
+            <select class="form-select" id="editRoleSelect">
+                @foreach (var role in roleOptions)
+                {
+                    <option value="@role.Value">@role.Text</option>
+                }
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">ชื่อ-นามสกุล</label>
+            <input type="text" class="form-control" id="editFullName" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">อีเมล</label>
+            <input type="email" class="form-control" id="editEmail" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">รหัสผ่าน (ปล่อยว่างหากไม่ต้องการเปลี่ยน)</label>
+            <input type="text" class="form-control" id="editPassword" />
+        </div>
+        <div class="row g-3">
+            <div class="col-sm-6">
+                <label class="form-label">เบอร์โทร</label>
+                <input type="text" class="form-control" id="editPhone" />
+            </div>
+            <div class="col-sm-6">
+                <label class="form-label">ที่อยู่</label>
+                <input type="text" class="form-control" id="editAddress" />
+            </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-auth-primary flex-grow-1" id="saveUserBtn">บันทึก</button>
+            <button class="btn btn-stock-ghost flex-grow-1" data-close>ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<div class="stock-modal" id="deleteUserModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-3">ยืนยันการลบผู้ใช้</h4>
+        <p id="deleteUserSummary" class="text-muted"></p>
+        <div class="mb-3">
+            <label class="form-label">กรอกรหัสผ่านของคุณเพื่อยืนยัน</label>
+            <input type="password" class="form-control" id="managerPasswordInput" />
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-danger flex-grow-1" id="confirmDeleteBtn">ยืนยันการลบ</button>
+            <button class="btn btn-stock-ghost flex-grow-1" data-close>ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<div class="stock-modal stock-modal--alert" id="managerAlertModal">
+    <div class="stock-modal__backdrop" data-close></div>
+    <div class="stock-modal__dialog">
+        <p id="managerAlertMessage" class="mb-0"></p>
+        <button class="btn btn-stock-ghost mt-3" data-close>ปิดหน้าต่าง</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.managerApi = {
+            listUsers: '@Url.Action("ListManagedUsers", "Staff")',
+            updateUser: '@Url.Action("UpdateManagedUser", "Staff")',
+            deleteUser: '@Url.Action("DeleteManagedUser", "Staff")'
+        };
+        window.managerData = {
+            roles: @Html.Raw(rolesJson)
+        };
+    </script>
+    <script src="~/js/staff-manager.js" asp-append-version="true"></script>
+}

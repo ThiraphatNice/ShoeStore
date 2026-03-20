@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShoeStore.Models.db;
 using ShoeStore.ViewModels;
+using ShoeStore.ViewModels.Staff;
 using ShoeStore.ViewModels.Stock;
 using System.Security.Claims;
 
@@ -27,8 +28,8 @@ namespace ShoeStore.Controllers
             {
                 RoleName = "Staff Manag",
                 DisplayName = "Operations Hub",
-                Description = "เธ”เธนเนเธฅเธฃเธฐเธเธเธซเธฅเธฑเธเธเนเธฒเธ เธเธณเธเธฑเธเธญเธญเน€เธ”เธญเธฃเนเนเธฅเธฐเธเธฒเธฃเธ”เธนเนเธฅเธฃเธฐเธเธ",
-                ActionName = nameof(ManageOrders)
+                Description = "เธ”เธนเนเธฅเธเน€เธเธทเธเธเธเธญเธฅเธฐเธกเธนเธขเธเนเธเธขเธญเธเนเธฅเธฐเธเนเธญเธเธเนเธฒเธเธฑเธเธเธต",
+                ActionName = nameof(ManageUsers)
             },
             ["Staff Sell"] = new StaffSectionOption
             {
@@ -107,6 +108,34 @@ namespace ShoeStore.Controllers
             }
 
             return View();
+        }
+
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> ManageUsers()
+        {
+            if (!CanAccessSection("Staff Manag"))
+            {
+                return Forbid();
+            }
+
+            var roles = (await _context.Roles
+                .AsNoTracking()
+                .OrderBy(r => r.RoleName)
+                .ToListAsync())
+                .Where(r => !IsAdminRole(r.RoleName))
+                .Select(r => new SelectListItem
+                {
+                    Value = r.Id.ToString(),
+                    Text = r.RoleName
+                })
+                .ToList();
+
+            var model = new StaffManagerPageViewModel
+            {
+                RoleOptions = roles
+            };
+
+            return View(model);
         }
 
         public IActionResult Sales()
@@ -200,7 +229,17 @@ namespace ShoeStore.Controllers
 
         private bool CanAccessSection(string roleName)
         {
-            return User.IsInRole("Admin") || User.IsInRole(roleName);
+            if (User.IsInRole("Admin") || User.IsInRole(roleName))
+            {
+                return true;
+            }
+
+            if (roleName.StartsWith("Staff", StringComparison.OrdinalIgnoreCase) && User.IsInRole("Staff"))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         [Authorize(Roles = "Admin,Staff Stock")]
@@ -259,8 +298,8 @@ namespace ShoeStore.Controllers
                 return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒ" });
             }
 
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
-            if (!categoryExists)
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
+            if (category == null)
             {
                 return Json(new { success = false, message = "เธซเธกเธงเธ”เธซเธกเธนเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
             }
@@ -271,6 +310,7 @@ namespace ShoeStore.Controllers
             product.Price = request.Price;
             product.DiscountPercent = request.DiscountPercent;
             product.CategoryId = request.CategoryId;
+            product.IsLimited = IsLimitedCategory(category.CategoryName);
 
             await _context.SaveChangesAsync();
             return Json(new { success = true });
@@ -362,6 +402,32 @@ namespace ShoeStore.Controllers
             return Json(new { success = true, data });
         }
 
+        [Authorize(Roles = "Admin,Staff")]
+        [HttpGet]
+        public async Task<IActionResult> ListManagedUsers()
+        {
+            var users = (await _context.Users
+                .AsNoTracking()
+                .Include(u => u.Role)
+                .OrderBy(u => u.Id)
+                .ToListAsync())
+                .Where(u => !IsAdminRole(u.Role.RoleName))
+                .Select(u => new ManagedUserRowViewModel
+                {
+                    Id = u.Id,
+                    RoleId = u.RoleId,
+                    RoleName = u.Role.RoleName,
+                    FullName = u.Fullname,
+                    Email = u.Email,
+                    Password = u.PasswordHash,
+                    Phone = u.Phone,
+                    Address = u.Address
+                })
+                .ToList();
+
+            return Json(new { success = true, data = users });
+        }
+
         [Authorize(Roles = "Admin,Staff Stock")]
         [HttpPost]
         [IgnoreAntiforgeryToken]
@@ -372,8 +438,8 @@ namespace ShoeStore.Controllers
                 return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
             }
 
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
-            if (!categoryExists)
+            var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
+            if (category == null)
             {
                 return Json(new { success = false, message = "เธซเธกเธงเธ”เธซเธกเธนเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
             }
@@ -386,7 +452,7 @@ namespace ShoeStore.Controllers
                 Price = request.Price,
                 DiscountPercent = request.DiscountPercent,
                 CategoryId = request.CategoryId,
-                IsLimited = false,
+                IsLimited = IsLimitedCategory(category.CategoryName),
                 StockTotal = 0,
                 CreatedAt = DateTime.UtcNow
             };
@@ -395,6 +461,88 @@ namespace ShoeStore.Controllers
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, id = product.Id });
+        }
+
+        [Authorize(Roles = "Admin,Staff")]
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UpdateManagedUser([FromBody] UpdateManagedUserRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+            }
+
+            var user = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+            if (user == null || IsAdminRole(user.Role.RoleName))
+            {
+                return Json(new { success = false, message = "ไม่สามารถแก้ไขบัญชีนี้ได้" });
+            }
+
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == request.RoleId);
+            if (role == null || IsAdminRole(role.RoleName))
+            {
+                return Json(new { success = false, message = "สิทธิ์ที่เลือกไม่ถูกต้อง" });
+            }
+
+            var emailExists = await _context.Users
+                .AnyAsync(u => u.Email == request.Email && u.Id != request.UserId);
+            if (emailExists)
+            {
+                return Json(new { success = false, message = "อีเมลนี้มีผู้ใช้งานแล้ว" });
+            }
+
+            user.RoleId = request.RoleId;
+            user.Fullname = request.FullName.Trim();
+            user.Email = request.Email.Trim();
+            user.Phone = string.IsNullOrWhiteSpace(request.Phone) ? null : request.Phone.Trim();
+            user.Address = string.IsNullOrWhiteSpace(request.Address) ? null : request.Address.Trim();
+            if (!string.IsNullOrWhiteSpace(request.Password))
+            {
+                user.PasswordHash = request.Password;
+            }
+
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
+        }
+
+        [Authorize(Roles = "Admin,Staff")]
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> DeleteManagedUser([FromBody] DeleteManagedUserRequest request)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "กรุณากรอกข้อมูลให้ครบ" });
+            }
+
+            var target = await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+            if (target == null || IsAdminRole(target.Role.RoleName))
+            {
+                return Json(new { success = false, message = "ไม่สามารถลบบัญชีนี้ได้" });
+            }
+
+            var managerIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(managerIdClaim) || !int.TryParse(managerIdClaim, out var managerId))
+            {
+                return Json(new { success = false, message = "กรุณาเข้าสู่ระบบใหม่" });
+            }
+
+            var manager = await _context.Users.FirstOrDefaultAsync(u => u.Id == managerId);
+            if (manager == null || manager.PasswordHash != request.ManagerPassword)
+            {
+                return Json(new { success = false, message = "รหัสผ่านผู้จัดการไม่ถูกต้อง" });
+            }
+
+            _context.Users.Remove(target);
+            await _context.SaveChangesAsync();
+            return Json(new { success = true });
         }
 
         private IEnumerable<StaffSectionOption> GetSectionsForCurrentUser()
@@ -408,6 +556,11 @@ namespace ShoeStore.Controllers
                 .Where(c => c.Type == ClaimTypes.Role && c.Value.StartsWith("Staff", StringComparison.OrdinalIgnoreCase))
                 .Select(c => c.Value)
                 .Distinct(StringComparer.OrdinalIgnoreCase);
+
+            if (User.IsInRole("Staff"))
+            {
+                return StaffSections.Values;
+            }
 
             return roleNames
                 .Where(StaffSections.ContainsKey)
@@ -439,6 +592,16 @@ namespace ShoeStore.Controllers
                 product.StockTotal = total;
                 await _context.SaveChangesAsync();
             }
+        }
+
+        private static bool IsAdminRole(string roleName)
+        {
+            return roleName.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsLimitedCategory(string categoryName)
+        {
+            return categoryName.Equals("Limited Edition", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

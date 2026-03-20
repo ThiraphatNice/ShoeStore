@@ -17,6 +17,32 @@
     alert: getElement('alertModal'),
   };
 
+  const attachNumericGuards = (() => {
+    const invalidKeys = new Set(['e', 'E', '+', '-']);
+    const sanitizeDecimal = (value) =>
+      value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1');
+    const sanitizeInteger = (value) => value.replace(/[^0-9]/g, '');
+
+    return (element, allowDecimal = false) => {
+      if (!element) {
+        return;
+      }
+      element.addEventListener('keydown', (event) => {
+        if (invalidKeys.has(event.key) || (!allowDecimal && event.key === '.')) {
+          event.preventDefault();
+        }
+      });
+      element.addEventListener('input', () => {
+        const sanitized = allowDecimal
+          ? sanitizeDecimal(element.value)
+          : sanitizeInteger(element.value);
+        if (sanitized !== element.value) {
+          element.value = sanitized;
+        }
+      });
+    };
+  })();
+
   const openModal = (modal) => {
     if (!modal) return;
     modal.classList.add('is-visible');
@@ -110,6 +136,10 @@
       getElement('productDiscountInput').value = data.discountPercent ?? 0;
       getElement('productCategorySelect').value = data.categoryId ?? '';
       getElement('productImageInput').value = data.imageUrl ?? '';
+      const qtyInput = getElement('variantQuantityInput');
+      if (qtyInput) {
+        qtyInput.value = '';
+      }
 
       populateVariants();
       openModal(modals.product);
@@ -136,6 +166,14 @@
 
     if (!payload.name || Number.isNaN(payload.price) || Number.isNaN(payload.discountPercent) || !payload.categoryId) {
       showAlert('กรุณากรอกข้อมูลสินค้าให้ครบถ้วนก่อนบันทึก');
+      return;
+    }
+    if (payload.price < 0) {
+      showAlert('ราคาต้องไม่ติดลบ');
+      return;
+    }
+    if (payload.discountPercent < 0 || payload.discountPercent > 100) {
+      showAlert('ส่วนลดต้องอยู่ระหว่าง 0-100%');
       return;
     }
 
@@ -291,6 +329,14 @@
       showAlert('กรุณากรอกข้อมูลสินค้าใหม่ให้ครบถ้วน');
       return;
     }
+    if (payload.price < 0) {
+      showAlert('ราคาต้องไม่ติดลบ');
+      return;
+    }
+    if (payload.discountPercent < 0 || payload.discountPercent > 100) {
+      showAlert('ส่วนลดต้องอยู่ระหว่าง 0-100%');
+      return;
+    }
 
     try {
       const response = await fetch(window.stockApi.createProduct, {
@@ -327,4 +373,10 @@
   getElement('openInventoryBtn')?.addEventListener('click', listInventory);
   getElement('openNewProductBtn')?.addEventListener('click', () => openModal(modals.create));
   getElement('createProductBtn')?.addEventListener('click', createProduct);
+
+  attachNumericGuards(getElement('productPriceInput'), true);
+  attachNumericGuards(getElement('productDiscountInput'), true);
+  attachNumericGuards(getElement('variantQuantityInput'));
+  attachNumericGuards(getElement('createPriceInput'), true);
+  attachNumericGuards(getElement('createDiscountInput'), true);
 })();
