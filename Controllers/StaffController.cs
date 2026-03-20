@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -20,28 +20,28 @@ namespace ShoeStore.Controllers
             {
                 RoleName = "Staff Stock",
                 DisplayName = "Stock Control",
-                Description = "ตรวจเช็กจำนวนสินค้า รับสินค้าเข้า และอัปเดตคลังแบบ real-time",
+                Description = "เธ•เธฃเธงเธเน€เธเนเธเธเธณเธเธงเธเธชเธดเธเธเนเธฒ เธฃเธฑเธเธชเธดเธเธเนเธฒเน€เธเนเธฒ เนเธฅเธฐเธญเธฑเธเน€เธ”เธ•เธเธฅเธฑเธเนเธเธ real-time",
                 ActionName = nameof(Stock)
             },
             ["Staff Manag"] = new StaffSectionOption
             {
                 RoleName = "Staff Manag",
                 DisplayName = "Operations Hub",
-                Description = "ดูแลระบบหลังบ้าน กำกับออเดอร์และการดูแลระบบ",
+                Description = "เธ”เธนเนเธฅเธฃเธฐเธเธเธซเธฅเธฑเธเธเนเธฒเธ เธเธณเธเธฑเธเธญเธญเน€เธ”เธญเธฃเนเนเธฅเธฐเธเธฒเธฃเธ”เธนเนเธฅเธฃเธฐเธเธ",
                 ActionName = nameof(ManageOrders)
             },
             ["Staff Sell"] = new StaffSectionOption
             {
                 RoleName = "Staff Sell",
                 DisplayName = "Sales & Promotions",
-                Description = "วางแผนโปรโมชันและแคมเปญการขาย",
+                Description = "เธงเธฒเธเนเธเธเนเธเธฃเนเธกเธเธฑเธเนเธฅเธฐเนเธเธกเน€เธเธเธเธฒเธฃเธเธฒเธข",
                 ActionName = nameof(Sales)
             },
             ["Staff Express"] = new StaffSectionOption
             {
                 RoleName = "Staff Express",
                 DisplayName = "Express Logistics",
-                Description = "เตรียมแพ็คสินค้าและดูแลการจัดส่ง",
+                Description = "เน€เธ•เธฃเธตเธขเธกเนเธเนเธเธชเธดเธเธเนเธฒเนเธฅเธฐเธ”เธนเนเธฅเธเธฒเธฃเธเธฑเธ”เธชเนเธ",
                 ActionName = nameof(Express)
             }
         };
@@ -50,7 +50,7 @@ namespace ShoeStore.Controllers
         {
             RoleName = "Admin",
             DisplayName = "Admin Control Center",
-            Description = "สร้าง/จัดการบัญชีพนักงานและผู้ใช้งาน",
+            Description = "เธชเธฃเนเธฒเธ/เธเธฑเธ”เธเธฒเธฃเธเธฑเธเธเธตเธเธเธฑเธเธเธฒเธเนเธฅเธฐเธเธนเนเนเธเนเธเธฒเธ",
             ActionName = nameof(ManageStaff)
         };
 
@@ -165,21 +165,21 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["StaffError"] = "โปรดกรอกข้อมูลให้ครบถ้วน";
+                TempData["StaffError"] = "เนเธเธฃเธ”เธเธฃเธญเธเธเนเธญเธกเธนเธฅเนเธซเนเธเธฃเธเธ–เนเธงเธ";
                 return RedirectToAction(nameof(ManageStaff));
             }
 
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == model.RoleId);
             if (role == null || role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                TempData["StaffError"] = "ไม่สามารถเพิ่มบัญชีด้วยสิทธิ์ที่เลือกได้";
+                TempData["StaffError"] = "เนเธกเนเธชเธฒเธกเธฒเธฃเธ–เน€เธเธดเนเธกเธเธฑเธเธเธตเธ”เนเธงเธขเธชเธดเธ—เธเธดเนเธ—เธตเนเน€เธฅเธทเธญเธเนเธ”เน";
                 return RedirectToAction(nameof(ManageStaff));
             }
 
             var emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email);
             if (emailExists)
             {
-                TempData["StaffError"] = "อีเมลนี้ถูกใช้งานอยู่แล้ว";
+                TempData["StaffError"] = "เธญเธตเน€เธกเธฅเธเธตเนเธ–เธนเธเนเธเนเธเธฒเธเธญเธขเธนเนเนเธฅเนเธง";
                 return RedirectToAction(nameof(ManageStaff));
             }
 
@@ -194,7 +194,7 @@ namespace ShoeStore.Controllers
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            TempData["StaffStatus"] = $"สร้างบัญชี {role.RoleName} สำหรับ {model.FullName} สำเร็จ";
+            TempData["StaffStatus"] = $"เธชเธฃเนเธฒเธเธเธฑเธเธเธต {role.RoleName} เธชเธณเธซเธฃเธฑเธ {model.FullName} เธชเธณเน€เธฃเนเธ";
             return RedirectToAction(nameof(ManageStaff));
         }
 
@@ -226,6 +226,7 @@ namespace ShoeStore.Controllers
                 DiscountPercent = product.DiscountPercent ?? 0m,
                 CategoryId = product.CategoryId,
                 CategoryName = product.Category.CategoryName,
+                ImageUrl = product.ImageUrl,
                 Variants = product.ProductVariants
                     .OrderBy(v => v.Size)
                     .ThenBy(v => v.Color)
@@ -249,23 +250,24 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
             }
 
             var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId);
             if (product == null)
             {
-                return Json(new { success = false, message = "ไม่พบสินค้า" });
+                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒ" });
             }
 
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
             if (!categoryExists)
             {
-                return Json(new { success = false, message = "หมวดหมู่ไม่ถูกต้อง" });
+                return Json(new { success = false, message = "เธซเธกเธงเธ”เธซเธกเธนเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
             }
 
             product.ProductName = request.Name;
             product.Description = request.Description;
+            product.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl) ? null : request.ImageUrl.Trim();
             product.Price = request.Price;
             product.DiscountPercent = request.DiscountPercent;
             product.CategoryId = request.CategoryId;
@@ -281,7 +283,7 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
             }
 
             var variant = await _context.ProductVariants
@@ -291,7 +293,7 @@ namespace ShoeStore.Controllers
 
             if (variant == null)
             {
-                return Json(new { success = false, message = "ไม่พบรายการไซส์/สีนี้" });
+                return Json(new { success = false, message = "เนเธกเนเธเธเธฃเธฒเธขเธเธฒเธฃเนเธเธชเน/เธชเธตเธเธตเน" });
             }
 
             variant.StockQuantity = request.Quantity;
@@ -308,7 +310,7 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
             }
 
             var exists = await _context.ProductVariants.AnyAsync(v =>
@@ -318,7 +320,7 @@ namespace ShoeStore.Controllers
 
             if (exists)
             {
-                return Json(new { success = false, message = "รายการไซส์/สีนี้มีอยู่แล้ว" });
+                return Json(new { success = false, message = "เธฃเธฒเธขเธเธฒเธฃเนเธเธชเน/เธชเธตเธเธตเนเธกเธตเธญเธขเธนเนเนเธฅเนเธง" });
             }
 
             var variant = new ProductVariant
@@ -343,7 +345,7 @@ namespace ShoeStore.Controllers
             var data = await _context.Products
                 .AsNoTracking()
                 .Include(p => p.Category)
-                .OrderBy(p => p.ProductName)
+                .OrderBy(p => p.Id)
                 .Take(100)
                 .Select(p => new InventoryRowViewModel
                 {
@@ -367,13 +369,13 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
             }
 
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == request.CategoryId);
             if (!categoryExists)
             {
-                return Json(new { success = false, message = "หมวดหมู่ไม่ถูกต้อง" });
+                return Json(new { success = false, message = "เธซเธกเธงเธ”เธซเธกเธนเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
             }
 
             var product = new Product

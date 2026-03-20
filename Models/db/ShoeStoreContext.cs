@@ -223,6 +223,9 @@ public partial class ShoeStoreContext : DbContext
             entity.Property(e => e.Description)
                 .HasColumnType("text")
                 .HasColumnName("description");
+            entity.Property(e => e.ImageUrl)
+                .HasMaxLength(500)
+                .HasColumnName("image_url");
             entity.Property(e => e.DiscountPercent)
                 .HasPrecision(5, 2)
                 .HasDefaultValueSql("'0.00'")

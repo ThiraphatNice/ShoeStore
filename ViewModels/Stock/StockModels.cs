@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -18,6 +18,8 @@ namespace ShoeStore.ViewModels.Stock
         public string Name { get; set; } = string.Empty;
 
         public string? Description { get; set; }
+
+        public string? ImageUrl { get; set; }
 
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
@@ -64,6 +66,8 @@ namespace ShoeStore.ViewModels.Stock
         [Required]
         public string Description { get; set; } = string.Empty;
 
+        public string? ImageUrl { get; set; }
+
         [Range(0, double.MaxValue)]
         public decimal Price { get; set; }
 
@@ -79,6 +83,8 @@ namespace ShoeStore.ViewModels.Stock
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
+
+        public string? ImageUrl { get; set; }
         public decimal Price { get; set; }
         public decimal DiscountPercent { get; set; }
         public int CategoryId { get; set; }

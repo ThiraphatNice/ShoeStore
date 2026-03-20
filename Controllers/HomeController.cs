@@ -27,7 +27,7 @@ public class HomeController : Controller
         ["Dr. Martens 1460"] = "https://images.unsplash.com/photo-1475180098004-ca77a66827be?auto=format&fit=crop&w=800&q=80",
         ["Nike Dunk Low Panda"] = "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80"
     };
-    private const string DefaultProductImage = "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80";
+    private const string DefaultProductImage = "/img/placeholder-shoe.svg";
 
     public HomeController(ShoeStoreContext context)
     {
@@ -122,6 +122,10 @@ public class HomeController : Controller
             })
             .ToList() ?? new List<ProductVariantSummaryViewModel>();
 
+        var resolvedImage = string.IsNullOrWhiteSpace(product.ImageUrl)
+            ? ResolveProductImage(product.ProductName)
+            : product.ImageUrl!;
+
         return new ProductCardViewModel
         {
             Id = product.Id,
@@ -131,7 +135,7 @@ public class HomeController : Controller
             Price = product.Price,
             DiscountPercent = product.DiscountPercent ?? 0m,
             IsLimited = product.IsLimited ?? false,
-            ImageUrl = ResolveProductImage(product.ProductName),
+            ImageUrl = resolvedImage,
             Variants = variants
         };
     }
