@@ -57,6 +57,21 @@
             font-weight: 500;
             font-size: 0.9rem;
         }
+
+        .btn-staff-primary {
+            border-radius: 18px;
+            background: #7d2424;
+            color: #fff;
+            border: none;
+            padding: 10px 26px;
+            font-weight: 600;
+            box-shadow: 0 12px 30px rgba(125, 36, 36, 0.2);
+        }
+
+        .btn-staff-primary:hover {
+            color: #fff;
+            opacity: 0.95;
+        }
     </style>
 }
 
@@ -81,7 +96,7 @@
                                 <option value="@Url.Action(area.ActionName, "Staff")">@area.DisplayName</option>
                             }
                         </select>
-                        <button type="button" id="goToSection" class="btn btn-auth-primary" @(Model.Sections.Any() ? string.Empty : "disabled")>
+                        <button type="button" id="goToSection" class="btn btn-staff-primary" @(Model.Sections.Any() ? string.Empty : "disabled")>
                             ไปหน้าจัดการ
                         </button>
                     </div>

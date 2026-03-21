@@ -1,72 +1,298 @@
-@model ShoeStore.Models.db.User
+@model ShoeStore.ViewModels.Account.ProfilePageViewModel
 @{
     ViewData["Title"] = "Profile";
+    var shouldOpenModal = (ViewData["OpenEditModal"] as bool?) ?? false;
+    var statusMessage = ViewBag.ProfileStatus as string;
 }
 
 @section Styles {
     <style>
-        .home-hero {
+        .profile-hero {
             text-align: center;
-            padding: 40px 0;
+            padding: 48px 0 16px;
         }
 
-        .home-hero h1 {
-            font-size: clamp(2rem, 4vw, 2.6rem);
-            font-weight: 600;
-            margin-bottom: 12px;
+        .profile-hero h1 {
+            font-size: clamp(2.2rem, 4vw, 2.8rem);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
         }
 
-        .home-hero p {
+        .profile-hero p {
             color: #6a6a6a;
+        }
+
+        .profile-wrapper {
+            display: flex;
+            justify-content: center;
+            padding-bottom: 56px;
+        }
+
+        .profile-card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 32px;
+            width: min(680px, 100%);
+            box-shadow: 0 22px 75px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .profile-card__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .profile-role-pill {
+            padding: 6px 18px;
+            border-radius: 999px;
+            background: #fdecec;
+            color: #7d2424;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .profile-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .profile-detail-grid dt {
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9b9b9b;
+        }
+
+        .profile-detail-grid dd {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2c2c2c;
             margin-bottom: 0;
         }
 
-        .product-section {
-            margin-top: 30px;
+        .profile-card__actions {
             display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding-top: 24px;
+        }
+
+        .profile-btn {
+            border-radius: 18px;
+            padding: 10px 28px;
+            font-weight: 600;
+            border: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .profile-btn:focus {
+            outline: none;
+            box-shadow: 0 0 0 0.2rem rgba(125, 36, 36, 0.2);
+        }
+
+        .profile-btn--secondary {
+            background: #a65a2a;
+            color: #fff;
+        }
+
+        .profile-btn--primary {
+            background: #b53636;
+            color: #fff;
+        }
+
+        .profile-btn--primary:hover,
+        .profile-btn--secondary:hover {
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .profile-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
             justify-content: center;
+            z-index: 3000;
         }
 
-        .product-card {
+        .profile-modal.is-visible {
+            display: flex;
+        }
+
+        .profile-modal__backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .profile-modal__dialog {
+            position: relative;
+            z-index: 1;
             background: #fff;
-            border-radius: 22px;
-            padding: 24px;
-            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
-            width: min(480px, 100%);
+            padding: 32px;
+            border-radius: 28px;
+            width: min(640px, 92vw);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.25);
         }
 
-        .profile-card h3 {
-            font-size: 1.2rem;
-            margin-bottom: 12px;
+        .profile-modal__close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            border: none;
+            background: transparent;
+            font-size: 2rem;
+            line-height: 1;
+            color: #7d2424;
         }
 
-        .profile-card p {
-            color: #555;
+        .profile-modal h3 {
+            margin-bottom: 1rem;
+        }
+
+        @@media (max-width: 576px) {
+            .profile-card {
+                padding: 24px;
+            }
+
+            .profile-card__actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .profile-btn {
+                width: 100%;
+                text-align: center;
+            }
         }
     </style>
 }
 
-<section class="home-hero">
+<section class="profile-hero">
     <h1>Profile</h1>
-    <p>Manage your account and sign out securely.</p>
+    <p>Manage your account and stay secure.</p>
 </section>
 
-<section class="product-section">
-    <div class="product-card profile-card">
-        <h3>@Model?.Fullname</h3>
-        <p class="mb-1"><strong>Email:</strong> @Model?.Email</p>
-        <p class="mb-1"><strong>Role:</strong> @Model?.Role?.RoleName</p>
-        @if (!string.IsNullOrWhiteSpace(Model?.Phone))
-        {
-            <p class="mb-1"><strong>Phone:</strong> @Model!.Phone</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Model?.Address))
-        {
-            <p class="mb-4"><strong>Address:</strong> @Model!.Address</p>
-        }
-        <form asp-action="Logout" method="post">
+@if (!string.IsNullOrWhiteSpace(statusMessage))
+{
+    <div class="container mb-4">
+        <div class="alert alert-success" role="alert">@statusMessage</div>
+    </div>
+}
+
+<div class="profile-wrapper container">
+    <article class="profile-card">
+        <div class="profile-card__header">
+            <div>
+                <p class="text-muted mb-1">Signed in as</p>
+                <h2 class="fw-bold mb-0">@Model.FullName</h2>
+            </div>
+            <span class="profile-role-pill">@Model.RoleName</span>
+        </div>
+        <dl class="profile-detail-grid">
+            <div>
+                <dt>Email</dt>
+                <dd>@Model.Email</dd>
+            </div>
+            <div>
+                <dt>Phone</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.Phone) ? "ยังไม่ได้ระบุ" : Model.Phone)</dd>
+            </div>
+            <div>
+                <dt>Address</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.Address) ? "ยังไม่ได้ระบุ" : Model.Address)</dd>
+            </div>
+        </dl>
+        <div class="profile-card__actions">
+            <button type="button" class="profile-btn profile-btn--secondary" id="openProfileModal">
+                Edit
+            </button>
+            <form asp-action="Logout" method="post" class="m-0">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="profile-btn profile-btn--primary">Log Out</button>
+            </form>
+        </div>
+    </article>
+</div>
+
+<div class="profile-modal@(shouldOpenModal ? " is-visible" : string.Empty)" id="profileModal" data-open="@(shouldOpenModal.ToString().ToLowerInvariant())">
+    <div class="profile-modal__backdrop" data-close></div>
+    <div class="profile-modal__dialog">
+        <button type="button" class="profile-modal__close" data-close aria-label="Close">&times;</button>
+        <h3 class="fw-bold">Edit profile</h3>
+        <form asp-action="UpdateProfile" method="post" novalidate class="row g-3">
             @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-danger px-4">Logout</button>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="col-12">
+                <label asp-for="EditForm.FullName" class="form-label"></label>
+                <input asp-for="EditForm.FullName" class="form-control" />
+                <span class="text-danger" asp-validation-for="EditForm.FullName"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="EditForm.Email" class="form-label"></label>
+                <input asp-for="EditForm.Email" class="form-control" />
+                <span class="text-danger" asp-validation-for="EditForm.Email"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="EditForm.Password" class="form-label"></label>
+                <input asp-for="EditForm.Password" class="form-control" autocomplete="new-password" />
+                <span class="text-danger" asp-validation-for="EditForm.Password"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="EditForm.ConfirmPassword" class="form-label"></label>
+                <input asp-for="EditForm.ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span class="text-danger" asp-validation-for="EditForm.ConfirmPassword"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="EditForm.Phone" class="form-label"></label>
+                <input asp-for="EditForm.Phone" class="form-control" inputmode="numeric" />
+                <span class="text-danger" asp-validation-for="EditForm.Phone"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="EditForm.Address" class="form-label"></label>
+                <input asp-for="EditForm.Address" class="form-control" />
+                <span class="text-danger" asp-validation-for="EditForm.Address"></span>
+            </div>
+            <div class="col-12 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-light" data-close>Cancel</button>
+                <button type="submit" class="btn btn-danger px-4">Save changes</button>
+            </div>
         </form>
     </div>
-</section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (() => {
+            const modal = document.getElementById('profileModal');
+            if (!modal) {
+                return;
+            }
+            const toggleModal = (shouldShow) => {
+                modal.classList.toggle('is-visible', shouldShow);
+            };
+            const openButton = document.getElementById('openProfileModal');
+            openButton?.addEventListener('click', () => toggleModal(true));
+            modal.querySelectorAll('[data-close]').forEach(btn =>
+                btn.addEventListener('click', () => toggleModal(false))
+            );
+            modal.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    toggleModal(false);
+                }
+            });
+            if (modal.dataset.open === 'true') {
+                toggleModal(true);
+            }
+        })();
+    </script>
+}

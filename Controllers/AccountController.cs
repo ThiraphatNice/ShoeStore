@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 using ShoeStore.ViewModels;
+using ShoeStore.ViewModels.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using ShoeStore.Models.db;
@@ -139,22 +140,55 @@ namespace ShoeStore.Controllers
         [HttpGet]
         public async Task<IActionResult> Profile()
         {
-            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdValue) || !int.TryParse(userIdValue, out var userId))
-            {
-                return RedirectToAction("Login");
-            }
-
-            var profile = await _context.Users
-                .Include(u => u.Role)
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
+            var profile = await GetCurrentUserAsync();
             if (profile == null)
             {
                 return RedirectToAction("Login");
             }
 
-            return View(profile);
+            ViewBag.ProfileStatus = TempData["ProfileSuccess"];
+            return View(BuildProfilePageModel(profile));
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([Bind(Prefix = "EditForm")] ProfileEditViewModel model)
+        {
+            var profile = await GetCurrentUserAsync();
+            if (profile == null)
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            var normalizedEmail = model.Email?.Trim() ?? string.Empty;
+            if (await _context.Users.AnyAsync(u => u.Email == normalizedEmail && u.Id != profile.Id))
+            {
+                ModelState.AddModelError("EditForm.Email", "เน€เธเธเน€เธเธ•เน€เธโฌเน€เธเธเน€เธเธ…เน€เธยเน€เธเธ•เน€เธยเน€เธโ€“เน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ…เน€เธยเน€เธเธ");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                ViewData["OpenEditModal"] = true;
+                model.Email = normalizedEmail;
+                return View(nameof(Profile), BuildProfilePageModel(profile, model));
+            }
+
+            profile.Fullname = model.FullName.Trim();
+            profile.Email = normalizedEmail;
+            profile.Phone = string.IsNullOrWhiteSpace(model.Phone) ? null : model.Phone.Trim();
+            profile.Address = string.IsNullOrWhiteSpace(model.Address) ? null : model.Address.Trim();
+
+            if (!string.IsNullOrWhiteSpace(model.Password))
+            {
+                profile.PasswordHash = model.Password;
+            }
+
+            await _context.SaveChangesAsync();
+            await RefreshUserSignInAsync(profile);
+            TempData["ProfileSuccess"] = "เน€เธเธเน€เธเธ‘เน€เธยเน€เธโฌเน€เธโ€เน€เธโ€ขเน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธ…เน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ…เน€เธยเน€เธเธ";
+
+            return RedirectToAction(nameof(Profile));
         }
 
         [HttpGet]
@@ -194,6 +228,50 @@ namespace ShoeStore.Controllers
             }
 
             return claims;
+        }
+
+        private async Task<Models.db.User?> GetCurrentUserAsync()
+        {
+            var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdValue) || !int.TryParse(userIdValue, out var userId))
+            {
+                return null;
+            }
+
+            return await _context.Users
+                .Include(u => u.Role)
+                .FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
+        private ProfilePageViewModel BuildProfilePageModel(Models.db.User user, ProfileEditViewModel? editForm = null)
+        {
+            var form = editForm ?? new ProfileEditViewModel
+            {
+                FullName = user.Fullname,
+                Email = user.Email,
+                Phone = user.Phone,
+                Address = user.Address
+            };
+
+            return new ProfilePageViewModel
+            {
+                FullName = user.Fullname,
+                Email = user.Email,
+                RoleName = user.Role?.RoleName ?? string.Empty,
+                Phone = user.Phone,
+                Address = user.Address,
+                EditForm = form
+            };
+        }
+
+        private async Task RefreshUserSignInAsync(Models.db.User user)
+        {
+            var claims = BuildClaims(user);
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties());
         }
     }
 }

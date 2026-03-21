@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -52,6 +52,7 @@ namespace ShoeStore.ViewModels.Stock
         public int ProductId { get; set; }
 
         [Required]
+        [RegularExpression(@"^\d{1,4}$", ErrorMessage = "Size must contain digits only.")]
         public string Size { get; set; } = string.Empty;
 
         [Required]

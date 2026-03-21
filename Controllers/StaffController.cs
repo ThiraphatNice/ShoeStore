@@ -348,6 +348,17 @@ namespace ShoeStore.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> AddVariant([FromBody] AddVariantRequest request)
         {
+            var normalizedSize = request.Size?.Trim() ?? string.Empty;
+            var normalizedColor = request.Color?.Trim() ?? string.Empty;
+            if (!string.Equals(request.Size, normalizedSize, StringComparison.Ordinal) ||
+                !string.Equals(request.Color, normalizedColor, StringComparison.Ordinal))
+            {
+                request.Size = normalizedSize;
+                request.Color = normalizedColor;
+                ModelState.Clear();
+                TryValidateModel(request);
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });

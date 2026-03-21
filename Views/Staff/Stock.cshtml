@@ -142,6 +142,16 @@
         .stock-table-wrapper table td {
             vertical-align: middle;
         }
+
+        .stock-page input[type=number]::-webkit-inner-spin-button,
+        .stock-page input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .stock-page input[type=number] {
+            -moz-appearance: textfield;
+        }
     </style>
 }
 
@@ -159,7 +169,7 @@
                 <p class="text-muted">กรอกรหัสสินค้า (เช่น 1, 2, 3) เพื่อแก้ไขรายละเอียดและสต็อก</p>
                 <div class="stock-input-group">
                     <input type="number" class="form-control" id="stockProductIdInput" placeholder="กรอกรหัสสินค้า..." min="1" />
-                    <button class="btn btn-auth-primary" id="searchProductBtn">ค้นหาสินค้า</button>
+                    <button class="btn btn-stock-primary" id="searchProductBtn">ค้นหาสินค้า</button>
                 </div>
             </article>
         </div>
@@ -256,14 +266,20 @@
                                    inputmode="numeric" />
                         </div>
                     </div>
-                    <button class="btn btn-auth-primary mt-3" id="updateVariantBtn">อัปเดตสต็อก</button>
+                    <button class="btn btn-stock-primary mt-3" id="updateVariantBtn">อัปเดตสต็อก</button>
                 </div>
                 <div class="modal-section">
                     <h4 class="fw-bold mb-3">เพิ่มไซส์/สีใหม่</h4>
                     <div class="row g-3 align-items-end">
                         <div class="col-sm-4">
                             <label class="form-label">ไซส์ใหม่</label>
-                            <input type="text" class="form-control" id="newSizeInput" placeholder="เช่น 41" />
+                            <input type="number"
+                                   class="form-control"
+                                   id="newSizeInput"
+                                   placeholder="เช่น 41"
+                                   min="0"
+                                   step="1"
+                                   inputmode="numeric" />
                         </div>
                         <div class="col-sm-4">
                             <label class="form-label">สีใหม่</label>
@@ -355,7 +371,7 @@
                    placeholder="https://cdn.example.com/shoes/new-drop.jpg" />
             <small class="text-muted">ใช้ลิงก์ภาพจาก CDN หรือ Cloud Storage</small>
         </div>
-        <button class="btn btn-auth-primary mt-4" id="createProductBtn">บันทึกสินค้า</button>
+        <button class="btn btn-stock-primary mt-4" id="createProductBtn">บันทึกสินค้า</button>
     </div>
 </div>
 
@@ -627,6 +643,11 @@
                     showAlert('กรุณากรอกไซส์และสีที่ต้องการเพิ่มให้ครบถ้วน');
                     return;
                 }
+                if (!/^\d+$/.test(size)) {
+                    showAlert('ไซส์ต้องเป็นตัวเลขเท่านั้น');
+                    getElement('newSizeInput')?.focus();
+                    return;
+                }
 
                 const payload = {
                     productId: state.productId,
@@ -760,6 +781,7 @@
             attachNumericGuards(getElement('variantQuantityInput'));
             attachNumericGuards(getElement('createPriceInput'), true);
             attachNumericGuards(getElement('createDiscountInput'), true);
+            attachNumericGuards(getElement('newSizeInput'));
         })();
     </script>
 }
