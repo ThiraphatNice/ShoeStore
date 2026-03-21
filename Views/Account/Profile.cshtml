@@ -3,6 +3,49 @@
     ViewData["Title"] = "Profile";
 }
 
+@section Styles {
+    <style>
+        .home-hero {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .home-hero h1 {
+            font-size: clamp(2rem, 4vw, 2.6rem);
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .home-hero p {
+            color: #6a6a6a;
+            margin-bottom: 0;
+        }
+
+        .product-section {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .product-card {
+            background: #fff;
+            border-radius: 22px;
+            padding: 24px;
+            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
+            width: min(480px, 100%);
+        }
+
+        .profile-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+        }
+
+        .profile-card p {
+            color: #555;
+        }
+    </style>
+}
+
 <section class="home-hero">
     <h1>Profile</h1>
     <p>Manage your account and sign out securely.</p>

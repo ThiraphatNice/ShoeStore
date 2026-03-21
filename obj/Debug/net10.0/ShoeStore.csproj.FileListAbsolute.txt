@@ -184,8 +184,4 @@ D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\zh-Hans\Microsoft
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.resources.dll
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.csproj.AssemblyReference.cache
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.csproj.Up2Date
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\duemh6tvc7-{0}-d4tidzdval-d4tidzdval.gz
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\jhvbocaw8t-{0}-18y1t025oz-18y1t025oz.gz
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\eqatwo9q56-{0}-7itisfqjkc-7itisfqjkc.gz
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\ipig610ncv-{0}-dzsqufng9u-dzsqufng9u.gz
-D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\6pbv5hye1h-{0}-z8e1ogibnr-z8e1ogibnr.gz

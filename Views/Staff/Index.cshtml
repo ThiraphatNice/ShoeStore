@@ -3,6 +3,63 @@
     ViewData["Title"] = "Staff Dashboard";
 }
 
+@section Styles {
+    <style>
+        .staff-card {
+            background: #fff;
+            border-radius: 28px;
+            padding: 32px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        .dashboard-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .selector-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .selector-row .form-select {
+            min-width: 240px;
+            flex: 1;
+            border-radius: 16px;
+            padding: 10px 14px;
+        }
+
+        .selector-row .btn {
+            min-width: 160px;
+        }
+
+        .selector-hint {
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+
+        .section-pill-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .section-pill {
+            padding: 6px 16px;
+            border-radius: 999px;
+            background: #fdecec;
+            color: #7d2424;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+    </style>
+}
+
 <div class="staff-dashboard container py-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">

@@ -9,8 +9,96 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/ShoeStore.styles.css" asp-append-version="true" />
+    <style>
+        html {
+            font-size: 14px;
+            position: relative;
+            min-height: 100%;
+        }
+
+        @@media (min-width: 768px) {
+            html {
+                font-size: 16px;
+            }
+        }
+
+        body {
+            margin: 0;
+            font-family: "Poppins", Arial, sans-serif;
+            background-color: #fdecec;
+            color: #2d2d2d;
+        }
+
+        .page-shell {
+            min-height: calc(100vh - 140px);
+            padding: 40px 24px;
+        }
+
+        .main-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer {
+            background: #fff;
+        }
+
+        .btn:focus,
+        .btn:active:focus,
+        .btn-link.nav-link:focus,
+        .form-control:focus,
+        .form-check-input:focus {
+            box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #b53636;
+        }
+
+        .main-navbar {
+            background-color: #7d2424;
+            padding: 0.75rem 2rem;
+        }
+
+        .main-navbar .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .main-navbar .navbar-toggler-icon {
+            filter: invert(1);
+        }
+
+        .brand-mark {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.4rem;
+        }
+
+        .brand-mark:hover {
+            color: #ffe4d9;
+        }
+
+        .nav-link-contrast {
+            color: #fff !important;
+            font-weight: 500;
+        }
+
+        .nav-link-contrast:hover,
+        .nav-link-contrast:focus {
+            color: #ffe4d9 !important;
+        }
+
+        .profile-pill {
+            padding: 0.4rem 1.2rem;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 999px;
+        }
+
+        .eyebrow {
+            font-size: 0.8rem;
+            letter-spacing: 0.3em;
+            color: #c66a6a;
+            text-transform: uppercase;
+        }
+    </style>
+    @RenderSection("Styles", required: false)
 </head>
 <body>
     @{
@@ -82,7 +170,6 @@
     </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
