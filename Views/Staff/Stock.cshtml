@@ -465,6 +465,16 @@
                 openModal(modals.alert);
             };
 
+            const syncVariantQuantityField = () => {
+                const quantityInput = getElement('variantQuantityInput');
+                if (!quantityInput) {
+                    return;
+                }
+                const variant = getSelectedVariant();
+                quantityInput.value =
+                    typeof variant?.stockQuantity === 'number' ? variant.stockQuantity : '';
+            };
+
             const populateVariants = () => {
                 const sizeSelect = getElement('variantSizeSelect');
                 const colorSelect = getElement('variantColorSelect');
@@ -494,6 +504,8 @@
                     option.textContent = color;
                     colorSelect.appendChild(option);
                 });
+
+                syncVariantQuantityField();
             };
 
             const getSelectedVariant = () => {
@@ -775,6 +787,8 @@
             getElement('openInventoryBtn')?.addEventListener('click', listInventory);
             getElement('openNewProductBtn')?.addEventListener('click', () => openModal(modals.create));
             getElement('createProductBtn')?.addEventListener('click', createProduct);
+            getElement('variantSizeSelect')?.addEventListener('change', syncVariantQuantityField);
+            getElement('variantColorSelect')?.addEventListener('change', syncVariantQuantityField);
 
             attachNumericGuards(getElement('productPriceInput'), true);
             attachNumericGuards(getElement('productDiscountInput'), true);

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj": {}
+    "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj": {}
   },
   "projects": {
-    "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj": {
+    "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
+        "projectUniqueName": "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
         "projectName": "ShoeStore",
-        "projectPath": "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
+        "projectPath": "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\ShoeStore.csproj",
         "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
-        "outputPath": "d:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\obj\\",
+        "outputPath": "D:\\VSCodeWork\\Year3\\CSI402\\Project\\ShoeStore\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config"

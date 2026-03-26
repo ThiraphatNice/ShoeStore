@@ -275,8 +275,26 @@
             margin-bottom: 16px;
         }
 
+        .modal-select-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .modal-select-group .select-wrapper {
+            flex: 1 1 180px;
+            max-width: 220px;
+        }
+
+        .select-wrapper label {
+            font-weight: 500;
+            margin-bottom: 6px;
+            display: block;
+        }
+
         .select-wrapper select {
             width: 100%;
+            max-width: 220px;
             padding: 10px 14px;
             border-radius: 14px;
             border: 1px solid #d8d8d8;
@@ -362,6 +380,17 @@
         .add-to-cart-btn {
             border-radius: 999px;
             padding: 10px 26px;
+            background: #b53636;
+            color: #fff;
+            border: none;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .add-to-cart-btn:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(181, 54, 54, 0.25);
         }
 
         .modal-close {
@@ -463,9 +492,15 @@
                 <div class="modal-image">
                     <img id="modalProductImage" src="" alt="Selected shoe" />
                 </div>
-                <div class="modal-control select-wrapper">
-                    <label for="modalSize" class="form-label">เลือกไซส์</label>
-                    <select id="modalSize" class="form-select"></select>
+                <div class="modal-control modal-select-group">
+                    <div class="select-wrapper">
+                        <label for="modalSize" class="form-label">เลือกไซส์</label>
+                        <select id="modalSize" class="form-select"></select>
+                    </div>
+                    <div class="select-wrapper">
+                        <label for="modalColorSelect" class="form-label">เลือกสี</label>
+                        <select id="modalColorSelect" class="form-select"></select>
+                    </div>
                 </div>
                 <div class="modal-control">
                     <label class="form-label">จำนวน</label>
@@ -481,7 +516,7 @@
                 <h3 id="modalProductName"></h3>
                 <p class="modal-description" id="modalDescription"></p>
                 <ul class="modal-meta">
-                    <li><span>สี</span><strong id="modalColor"></strong></li>
+                    <li><span>สี</span><strong id="modalColorValue"></strong></li>
                     <li><span>สต็อก</span><strong id="modalStock"></strong></li>
                     <li><span>หมวดหมู่</span><strong id="modalCategory"></strong></li>
                 </ul>
@@ -595,12 +630,13 @@
             const modalElements = {
                 name: document.getElementById('modalProductName'),
                 sku: document.getElementById('modalSku'),
-                color: document.getElementById('modalColor'),
+                colorLabel: document.getElementById('modalColorValue'),
                 stock: document.getElementById('modalStock'),
                 category: document.getElementById('modalCategory'),
                 description: document.getElementById('modalDescription'),
                 img: document.getElementById('modalProductImage'),
                 sizeSelect: document.getElementById('modalSize'),
+                colorSelect: document.getElementById('modalColorSelect'),
                 quantity: document.getElementById('modalQuantity'),
                 originalPrice: document.getElementById('modalOriginalPrice'),
                 currentPrice: document.getElementById('modalCurrentPrice'),
@@ -608,6 +644,8 @@
 
             let activeVariants = [];
             let currentProductData = null;
+            let fallbackSizes = [];
+            let fallbackColors = [];
 
             const safeParseVariants = (value) => {
                 try {
@@ -618,22 +656,59 @@
                 }
             };
 
-            const buildSizeOptions = (variants, fallbackSizes) => {
+            const parseOptionList = (value) =>
+                (value || '')
+                    .split('|')
+                    .map((entry) => entry.trim())
+                    .filter(Boolean);
+
+            const buildColorOptions = () => {
+                if (!modalElements.colorSelect) {
+                    return [];
+                }
+
+                const variantColors = activeVariants
+                    .map((variant) => variant.color)
+                    .filter(Boolean);
+                const combined = Array.from(new Set([...variantColors, ...fallbackColors]));
+
+                modalElements.colorSelect.innerHTML = '<option value="">เลือกสี</option>';
+
+                if (combined.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'สีเดียว';
+                    modalElements.colorSelect.appendChild(option);
+                    modalElements.colorSelect.disabled = true;
+                } else {
+                    modalElements.colorSelect.disabled = false;
+                    combined.forEach((color, index) => {
+                        const option = document.createElement('option');
+                        option.value = color;
+                        option.textContent = color;
+                        if (index === 0) {
+                            option.selected = true;
+                        }
+                        modalElements.colorSelect.appendChild(option);
+                    });
+                }
+
+                return combined;
+            };
+
+            const buildSizeOptions = (colorFilter) => {
                 if (!modalElements.sizeSelect) {
                     return [];
                 }
 
-                const normalizedSizes = (fallbackSizes || '')
-                    .split('|')
-                    .map((size) => size.trim())
-                    .filter(Boolean);
-
-                const variantSizes = variants
+                const variantSizes = activeVariants
+                    .filter((variant) => !colorFilter || variant.color === colorFilter)
                     .map((variant) => variant.size)
                     .filter(Boolean);
+                const combined = Array.from(new Set([...variantSizes, ...fallbackSizes]));
+                const previousValue = modalElements.sizeSelect.value;
 
-                const combined = Array.from(new Set([...variantSizes, ...normalizedSizes]));
-                modalElements.sizeSelect.innerHTML = '';
+                modalElements.sizeSelect.innerHTML = '<option value="">เลือกไซส์</option>';
 
                 if (combined.length === 0) {
                     const option = document.createElement('option');
@@ -643,15 +718,18 @@
                     modalElements.sizeSelect.disabled = true;
                 } else {
                     modalElements.sizeSelect.disabled = false;
-                    combined.forEach((size, index) => {
+                    combined.forEach((size) => {
                         const option = document.createElement('option');
                         option.value = size;
                         option.textContent = size;
-                        if (index === 0) {
-                            option.selected = true;
-                        }
                         modalElements.sizeSelect.appendChild(option);
                     });
+                }
+
+                if (previousValue && combined.includes(previousValue)) {
+                    modalElements.sizeSelect.value = previousValue;
+                } else if (combined.length > 0) {
+                    modalElements.sizeSelect.value = combined[0];
                 }
 
                 return combined;
@@ -661,12 +739,23 @@
                 if (!currentProductData) {
                     return;
                 }
-                const selectedSize = modalElements.sizeSelect?.value;
-                const candidate = selectedSize
-                    ? activeVariants.find((variant) => variant.size === selectedSize)
-                    : activeVariants[0];
+                const selectedSize = modalElements.sizeSelect?.value || '';
+                const selectedColor = modalElements.colorSelect?.value || '';
+                let candidate = null;
+                if (selectedSize && selectedColor) {
+                    candidate = activeVariants.find(
+                        (variant) => variant.size === selectedSize && variant.color === selectedColor
+                    );
+                }
+                if (!candidate && selectedColor) {
+                    candidate = activeVariants.find((variant) => variant.color === selectedColor);
+                }
+                if (!candidate && selectedSize) {
+                    candidate = activeVariants.find((variant) => variant.size === selectedSize);
+                }
 
-                modalElements.color.textContent = candidate?.color || currentProductData.productColor || '-';
+                modalElements.colorLabel.textContent =
+                    selectedColor || candidate?.color || currentProductData.productColor || '-';
                 modalElements.stock.textContent =
                     typeof candidate?.stockQuantity === 'number'
                         ? candidate.stockQuantity
@@ -688,7 +777,11 @@
                 modalElements.quantity.value = '1';
 
                 activeVariants = safeParseVariants(data.productVariants);
-                buildSizeOptions(activeVariants, data.productSizes);
+                fallbackSizes = parseOptionList(data.productSizes);
+                fallbackColors = parseOptionList(data.productColors);
+                buildColorOptions();
+                const currentColor = modalElements.colorSelect?.value || '';
+                buildSizeOptions(currentColor);
                 updateVariantDetails();
 
                 const basePrice = Number(data.productPrice ?? 0);
@@ -732,6 +825,10 @@
             });
 
             modalElements.sizeSelect?.addEventListener('change', updateVariantDetails);
+            modalElements.colorSelect?.addEventListener('change', () => {
+                buildSizeOptions(modalElements.colorSelect.value);
+                updateVariantDetails();
+            });
 
             modal.querySelectorAll('.qty-btn').forEach((btn) => {
                 btn.addEventListener('click', () => {
@@ -750,4 +847,5 @@
         })();
     </script>
 }
+
 

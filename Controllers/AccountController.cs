@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
@@ -164,7 +164,7 @@ namespace ShoeStore.Controllers
             var normalizedEmail = model.Email?.Trim() ?? string.Empty;
             if (await _context.Users.AnyAsync(u => u.Email == normalizedEmail && u.Id != profile.Id))
             {
-                ModelState.AddModelError("EditForm.Email", "เน€เธเธเน€เธเธ•เน€เธโฌเน€เธเธเน€เธเธ…เน€เธยเน€เธเธ•เน€เธยเน€เธโ€“เน€เธเธเน€เธยเน€เธยเน€เธยเน€เธยเน€เธยเน€เธเธ’เน€เธยเน€เธยเน€เธเธ…เน€เธยเน€เธเธ");
+                ModelState.AddModelError("EditForm.Email", "อีเมลนี้ถูกใช้งานแล้ว");
             }
 
             if (!ModelState.IsValid)
@@ -186,7 +186,7 @@ namespace ShoeStore.Controllers
 
             await _context.SaveChangesAsync();
             await RefreshUserSignInAsync(profile);
-            TempData["ProfileSuccess"] = "เน€เธเธเน€เธเธ‘เน€เธยเน€เธโฌเน€เธโ€เน€เธโ€ขเน€เธยเน€เธยเน€เธเธเน€เธเธเน€เธเธเน€เธเธ…เน€เธยเน€เธยเน€เธเธเน€เธยเน€เธยเน€เธเธ…เน€เธยเน€เธโฌเน€เธเธเน€เธเธ•เน€เธเธเน€เธยเน€เธเธเน€เธยเน€เธเธเน€เธเธเน€เธยเน€เธเธ…เน€เธยเน€เธเธ";
+            TempData["ProfileSuccess"] = "แก้ไขข้อมูลเรียบร้อย";
 
             return RedirectToAction(nameof(Profile));
         }
@@ -275,3 +275,4 @@ namespace ShoeStore.Controllers
         }
     }
 }
+
