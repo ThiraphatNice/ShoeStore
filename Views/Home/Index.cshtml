@@ -252,25 +252,6 @@
             flex: 1;
         }
 
-        .modal-image {
-            background: #f6f1f1;
-            border-radius: 24px;
-            padding: 16px;
-            margin-bottom: 18px;
-            text-align: center;
-            height: 320px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .modal-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
         .modal-control {
             margin-bottom: 16px;
         }
@@ -299,6 +280,25 @@
             border-radius: 14px;
             border: 1px solid #d8d8d8;
             font-size: 1rem;
+        }
+
+        .modal-image {
+            background: #f6f1f1;
+            border-radius: 24px;
+            padding: 16px;
+            margin-bottom: 18px;
+            text-align: center;
+            height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .modal-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .qty-control {
@@ -391,6 +391,43 @@
             color: #fff;
             transform: translateY(-1px);
             box-shadow: 0 12px 24px rgba(181, 54, 54, 0.25);
+        }
+
+        .home-toast {
+            position: fixed;
+            top: 96px;
+            right: 24px;
+            min-width: 260px;
+            max-width: 320px;
+            padding: 14px 18px;
+            border-radius: 16px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.15);
+            border: 1px solid transparent;
+            background: #fff;
+            color: #2c2c2c;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            z-index: 4000;
+        }
+
+        .home-toast.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .home-toast--success {
+            background: #f3fff6;
+            border-color: rgba(53, 143, 82, 0.3);
+            color: #25663e;
+        }
+
+        .home-toast--warning {
+            background: #fff6f1;
+            border-color: rgba(181, 54, 54, 0.2);
+            color: #7d2424;
         }
 
         .modal-close {
@@ -530,6 +567,8 @@
     </div>
 </div>
 
+<div class="home-toast" id="homeToast" aria-live="polite"></div>
+
 @section Scripts {
     <script>
         window.cartApi = Object.assign(window.cartApi || {}, {
@@ -652,6 +691,33 @@
             let currentProductData = null;
             let fallbackSizes = [];
             let fallbackColors = [];
+            const toastNode = document.getElementById('homeToast');
+            let toastTimeout = null;
+
+            const showToast = (message, tone = 'neutral') => {
+                if (!toastNode) {
+                    alert(message);
+                    return;
+                }
+                toastNode.textContent = message;
+                toastNode.classList.remove('home-toast--success', 'home-toast--warning');
+                if (tone === 'success') {
+                    toastNode.classList.add('home-toast--success');
+                } else if (tone === 'warning') {
+                    toastNode.classList.add('home-toast--warning');
+                }
+                toastNode.classList.add('is-visible');
+                clearTimeout(toastTimeout);
+                toastTimeout = setTimeout(() => {
+                    toastNode.classList.remove('is-visible');
+                }, 3200);
+            };
+
+            const parseOptionList = (value) =>
+                (value || '')
+                    .split('|')
+                    .map((entry) => entry.trim())
+                    .filter(Boolean);
 
             const safeParseVariants = (value) => {
                 try {
@@ -662,12 +728,6 @@
                 }
             };
 
-            const parseOptionList = (value) =>
-                (value || '')
-                    .split('|')
-                    .map((entry) => entry.trim())
-                    .filter(Boolean);
-
             const buildColorOptions = () => {
                 if (!modalElements.colorSelect) {
                     return [];
@@ -676,29 +736,30 @@
                 const variantColors = activeVariants
                     .map((variant) => variant.color)
                     .filter(Boolean);
-                const combined = Array.from(new Set([...variantColors, ...fallbackColors]));
 
-                modalElements.colorSelect.innerHTML = '<option value="">เลือกสี</option>';
+                const combined = Array.from(new Set([...variantColors, ...fallbackColors]));
+                const select = modalElements.colorSelect;
+                select.innerHTML = '';
 
                 if (combined.length === 0) {
                     const option = document.createElement('option');
                     option.value = '';
                     option.textContent = 'สีเดียว';
-                    modalElements.colorSelect.appendChild(option);
-                    modalElements.colorSelect.disabled = true;
-                } else {
-                    modalElements.colorSelect.disabled = false;
-                    combined.forEach((color, index) => {
-                        const option = document.createElement('option');
-                        option.value = color;
-                        option.textContent = color;
-                        if (index === 0) {
-                            option.selected = true;
-                        }
-                        modalElements.colorSelect.appendChild(option);
-                    });
+                    select.appendChild(option);
+                    select.disabled = true;
+                    return [];
                 }
 
+                select.disabled = false;
+                combined.forEach((color, index) => {
+                    const option = document.createElement('option');
+                    option.value = color;
+                    option.textContent = color;
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
                 return combined;
             };
 
@@ -709,36 +770,37 @@
 
                 const variantSizes = activeVariants
                     .filter((variant) => !colorFilter || variant.color === colorFilter)
-                    .map((variant) => variant.size)
+                    .map((variant) => variant.size ?? '')
                     .filter(Boolean);
+
                 const combined = Array.from(new Set([...variantSizes, ...fallbackSizes]));
-                const previousValue = modalElements.sizeSelect.value;
+                const numericPattern = /^\d+(\.\d+)?$/;
+                const numericOnly = combined.filter((size) => numericPattern.test(size));
+                const select = modalElements.sizeSelect;
+                const previousValue = select.value;
+                select.innerHTML = '';
 
-                modalElements.sizeSelect.innerHTML = '<option value="">เลือกไซส์</option>';
+                if (numericOnly.length === 0) {
+                    select.disabled = true;
+                    return [];
+                }
 
-                if (combined.length === 0) {
+                numericOnly.forEach((size, index) => {
                     const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = 'Free Size';
-                    modalElements.sizeSelect.appendChild(option);
-                    modalElements.sizeSelect.disabled = true;
-                } else {
-                    modalElements.sizeSelect.disabled = false;
-                    combined.forEach((size) => {
-                        const option = document.createElement('option');
-                        option.value = size;
-                        option.textContent = size;
-                        modalElements.sizeSelect.appendChild(option);
-                    });
+                    option.value = size;
+                    option.textContent = size;
+                    if (index === 0) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+
+                if (previousValue && numericOnly.includes(previousValue)) {
+                    select.value = previousValue;
                 }
 
-                if (previousValue && combined.includes(previousValue)) {
-                    modalElements.sizeSelect.value = previousValue;
-                } else if (combined.length > 0) {
-                    modalElements.sizeSelect.value = combined[0];
-                }
-
-                return combined;
+                select.disabled = false;
+                return numericOnly;
             };
 
             const getActiveVariant = () => {
@@ -769,8 +831,8 @@
                 if (!currentProductData) {
                     return;
                 }
-                const selectedColor = modalElements.colorSelect?.value || '';
                 const variant = getActiveVariant();
+                const selectedColor = modalElements.colorSelect?.value || '';
                 const resolvedStock =
                     typeof variant?.stockQuantity === 'number'
                         ? variant.stockQuantity
@@ -797,25 +859,25 @@
 
             const handleAddToCart = async () => {
                 if (!window.cartApi?.addItem) {
-                    alert('ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ในขณะนี้');
+                    showToast('ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ในขณะนี้', 'warning');
                     return;
                 }
 
                 const variant = getActiveVariant();
                 if (!variant?.variantId) {
-                    alert('กรุณาเลือกสีและไซส์ที่พร้อมจำหน่าย');
+                    showToast('กรุณาเลือกสีและไซส์ที่พร้อมจำหน่าย', 'warning');
                     return;
                 }
 
                 const available = variant.stockQuantity ?? 0;
                 if (available <= 0) {
-                    alert('สินค้าหมดสต็อกแล้ว');
+                    showToast('สินค้าหมดสต็อกแล้ว', 'warning');
                     return;
                 }
 
                 const quantity = Number(modalElements.quantity.value) || 1;
                 if (quantity > available) {
-                    alert(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`);
+                    showToast(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`, 'warning');
                     modalElements.quantity.value = String(available);
                     return;
                 }
@@ -831,17 +893,17 @@
                     });
                     const result = await response.json();
                     if (!result.success) {
-                        alert(result.message || 'ไม่สามารถเพิ่มสินค้าได้');
+                        showToast(result.message || 'ไม่สามารถเพิ่มสินค้าได้', 'warning');
                         return;
                     }
 
                     variant.stockQuantity = result.item?.variantStock ?? available - quantity;
                     modalElements.quantity.value = '1';
                     updateVariantDetails();
-                    alert('เพิ่มสินค้าในตะกร้าเรียบร้อยแล้ว');
+                    showToast('เพิ่มสินค้าในตะกร้าเรียบร้อยแล้ว', 'success');
                 } catch (error) {
                     console.error(error);
-                    alert('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+                    showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'warning');
                 }
             };
 
@@ -862,9 +924,9 @@
                 activeVariants = safeParseVariants(data.productVariants);
                 fallbackSizes = parseOptionList(data.productSizes);
                 fallbackColors = parseOptionList(data.productColors);
-                buildColorOptions();
-                const currentColor = modalElements.colorSelect?.value || '';
-                buildSizeOptions(currentColor);
+                const colorOptions = buildColorOptions();
+                const initialColor = modalElements.colorSelect?.value || colorOptions[0] || '';
+                buildSizeOptions(initialColor);
                 updateVariantDetails();
 
                 const basePrice = Number(data.productPrice ?? 0);
@@ -907,11 +969,12 @@
                 }
             });
 
-            modalElements.sizeSelect?.addEventListener('change', updateVariantDetails);
             modalElements.colorSelect?.addEventListener('change', () => {
-                buildSizeOptions(modalElements.colorSelect.value);
+                const selectedColor = modalElements.colorSelect?.value || '';
+                buildSizeOptions(selectedColor);
                 updateVariantDetails();
             });
+            modalElements.sizeSelect?.addEventListener('change', updateVariantDetails);
             modalElements.addButton?.addEventListener('click', handleAddToCart);
 
             const adjustQuantity = (direction) => {
@@ -927,7 +990,7 @@
 
                 if (direction === 'plus') {
                     if (Number.isFinite(available) && available <= current) {
-                        alert(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`);
+                        showToast(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`, 'warning');
                         return;
                     }
                     modalElements.quantity.value = String(current + 1);

@@ -133,11 +133,27 @@
 
         .cart-card__trash {
             border: none;
-            background: rgba(181, 54, 54, 0.12);
+            background: #ffe7e7;
             color: #b53636;
-            border-radius: 12px;
-            width: 44px;
-            height: 44px;
+            border-radius: 50%;
+            width: 46px;
+            height: 46px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+        }
+
+        .cart-card__trash:hover {
+            background: #b53636;
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .cart-card__trash svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
         }
 
         .cart-card__stock {
@@ -185,6 +201,68 @@
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
         }
 
+        .cart-confirm-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 3100;
+        }
+
+        .cart-confirm-modal.is-visible {
+            display: flex;
+        }
+
+        .cart-confirm-modal__backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .cart-confirm-modal__dialog {
+            position: relative;
+            z-index: 1;
+            width: min(420px, 92vw);
+            background: #fff;
+            border-radius: 24px;
+            padding: 28px;
+            box-shadow: 0 25px 75px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .cart-confirm-modal__dialog h4 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .cart-confirm-modal__actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cart-btn {
+            border-radius: 16px;
+            padding: 10px 20px;
+            font-weight: 600;
+            min-width: 140px;
+            border: none;
+        }
+
+        .cart-btn--ghost {
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            color: #7d2424;
+        }
+
+        .cart-btn--danger {
+            background: #b53636;
+            color: #fff;
+        }
+
         @@media (max-width: 576px) {
             .cart-card__media {
                 width: 100%;
@@ -213,7 +291,8 @@
                         <article class="cart-card"
                                  data-cart-id="@item.CartItemId"
                                  data-variant-id="@item.VariantId"
-                                 data-stock="@item.StockAvailable">
+                                 data-stock="@item.StockAvailable"
+                                 data-product-name="@item.ProductName">
                             <div class="cart-card__media">
                                 <img src="@item.ImageOrPlaceholder"
                                      alt="@item.ProductName"
@@ -232,7 +311,9 @@
                                             class="cart-card__trash"
                                             data-action="remove"
                                             aria-label="ลบสินค้าออกจากตะกร้า">
-                                        🗑️
+                                        <svg viewBox="0 0 24 24" role="presentation" aria-hidden="true">
+                                            <path d="M9 3h6a1 1 0 0 1 1 1v1h4v2h-1.1l-1 12.6A2 2 0 0 1 15.9 22H8.1a2 2 0 0 1-1.99-1.9L5.1 7H4V5h4V4a1 1 0 0 1 1-1Zm6 2H9v1h6V5Zm-6.9 3 1 12h6.8l1-12H8.1Z" />
+                                        </svg>
                                     </button>
                                 </div>
                                 <div class="cart-card__meta">
@@ -281,6 +362,18 @@
                 </aside>
             </div>
         </div>
+
+        <div class="cart-confirm-modal" id="cartConfirmModal">
+            <div class="cart-confirm-modal__backdrop" data-confirm-close></div>
+            <div class="cart-confirm-modal__dialog">
+                <h4>ลบสินค้าออกจากตะกร้า?</h4>
+                <p id="cartConfirmMessage" class="text-muted mb-3">ยืนยันการลบสินค้านี้ออกจากตะกร้า</p>
+                <div class="cart-confirm-modal__actions">
+                    <button type="button" class="cart-btn cart-btn--ghost" data-confirm-close>ยกเลิก</button>
+                    <button type="button" class="cart-btn cart-btn--danger" id="cartConfirmYes">ลบสินค้า</button>
+                </div>
+            </div>
+        </div>
     }
     else
     {
@@ -304,9 +397,51 @@
             const cartList = document.querySelector('.cart-list');
             const totalLabel = document.getElementById('cartTotal');
             const itemCountLabel = document.getElementById('cartItemCount');
+            const confirmModal = document.getElementById('cartConfirmModal');
+            const confirmMessage = document.getElementById('cartConfirmMessage');
+            const confirmAccept = document.getElementById('cartConfirmYes');
+            const confirmCloseButtons = document.querySelectorAll('[data-confirm-close]');
+            let pendingRemovalCard = null;
+
             if (!cartList || !window.cartApi) {
                 return;
             }
+
+            const toggleConfirmModal = (shouldOpen) => {
+                if (!confirmModal) {
+                    return;
+                }
+                confirmModal.classList.toggle('is-visible', shouldOpen);
+            };
+
+            const closeConfirmModal = () => {
+                toggleConfirmModal(false);
+                pendingRemovalCard = null;
+            };
+
+            const requestRemoval = (card) => {
+                if (!confirmModal) {
+                    removeItem(card);
+                    return;
+                }
+                pendingRemovalCard = card;
+                if (confirmMessage && card?.dataset.productName) {
+                    confirmMessage.textContent = `ต้องการลบ ${card.dataset.productName} ออกจากตะกร้าหรือไม่?`;
+                }
+                toggleConfirmModal(true);
+            };
+
+            confirmCloseButtons.forEach((btn) =>
+                btn.addEventListener('click', closeConfirmModal)
+            );
+
+            confirmAccept?.addEventListener('click', () => {
+                if (!pendingRemovalCard) {
+                    closeConfirmModal();
+                    return;
+                }
+                removeItem(pendingRemovalCard);
+            });
 
             const formatCurrency = (value) =>
                 `${new Intl.NumberFormat('th-TH').format(value)} บาท`;
@@ -366,10 +501,6 @@
                 if (!cartId) {
                     return;
                 }
-                const confirmed = confirm('ต้องการลบสินค้าออกจากตะกร้าหรือไม่?');
-                if (!confirmed) {
-                    return;
-                }
                 try {
                     const response = await fetch(window.cartApi.removeItem, {
                         method: 'POST',
@@ -381,6 +512,7 @@
                         alert(result.message || 'ไม่สามารถลบสินค้าได้');
                         return;
                     }
+                    closeConfirmModal();
                     card.remove();
                     handleTotals(result.totals);
 
@@ -404,7 +536,7 @@
                 }
 
                 if (button.dataset.action === 'remove') {
-                    removeItem(card);
+                    requestRemoval(card);
                     return;
                 }
 
