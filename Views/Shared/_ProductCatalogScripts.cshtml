@@ -1,0 +1,435 @@
+<script>
+    (() => {
+        const body = document.body;
+        const modal = document.getElementById('productModal');
+
+        const initGridControls = () => {
+            const arrowButtons = document.querySelectorAll('.grid-arrow');
+
+            const updateArrowVisibility = () => {
+                arrowButtons.forEach((button) => {
+                    const grid = button.closest('.product-rail')?.querySelector('.product-grid');
+                    if (!grid) {
+                        button.classList.add('is-hidden');
+                        return;
+                    }
+                    const shouldShow = grid.scrollWidth - grid.clientWidth > 12;
+                    button.classList.toggle('is-hidden', !shouldShow);
+                });
+            };
+
+            arrowButtons.forEach((button) => {
+                button.addEventListener('click', () => {
+                    const grid = button.closest('.product-rail')?.querySelector('.product-grid');
+                    if (!grid) {
+                        return;
+                    }
+                    grid.scrollBy({
+                        left: grid.clientWidth * 0.85,
+                        behavior: 'smooth',
+                    });
+                });
+            });
+
+            window.addEventListener('resize', updateArrowVisibility);
+            updateArrowVisibility();
+
+            const mobileMedia = window.matchMedia('(max-width: 768px)');
+            document.querySelectorAll('[data-grid-collapse]').forEach((section) => {
+                const cards = Array.from(section.querySelectorAll('.product-card'));
+                const moreBtn = section.querySelector('.mobile-more-btn');
+                if (!moreBtn || cards.length === 0) {
+                    return;
+                }
+
+                const chunk = Number(section.dataset.gridCollapse) || 4;
+                let visibleCount = Math.min(chunk, cards.length);
+
+                const applyVisibility = () => {
+                    if (!mobileMedia.matches) {
+                        cards.forEach((card) => card.classList.remove('is-hidden-mobile'));
+                        moreBtn.hidden = true;
+                        return;
+                    }
+
+                    moreBtn.hidden = cards.length <= chunk;
+                    cards.forEach((card, index) => {
+                        card.classList.toggle('is-hidden-mobile', index >= visibleCount);
+                    });
+                    moreBtn.textContent = visibleCount >= cards.length ? 'Hide' : 'More';
+                };
+
+                moreBtn.addEventListener('click', () => {
+                    if (!mobileMedia.matches) {
+                        return;
+                    }
+                    if (visibleCount >= cards.length) {
+                        visibleCount = chunk;
+                    } else {
+                        visibleCount = Math.min(visibleCount + chunk, cards.length);
+                    }
+                    applyVisibility();
+                });
+
+                mobileMedia.addEventListener('change', () => {
+                    if (!mobileMedia.matches) {
+                        visibleCount = cards.length;
+                    } else {
+                        visibleCount = Math.min(Math.max(visibleCount, chunk), cards.length);
+                    }
+                    applyVisibility();
+                });
+
+                applyVisibility();
+            });
+        };
+
+        if (!modal) {
+            initGridControls();
+            return;
+        }
+
+        const defaultModalImage =
+            'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80';
+        const formatPrice = (value) =>
+            `${new Intl.NumberFormat('th-TH').format(value)}.-`;
+
+        const modalElements = {
+            name: document.getElementById('modalProductName'),
+            sku: document.getElementById('modalSku'),
+            colorLabel: document.getElementById('modalColorValue'),
+            stock: document.getElementById('modalStock'),
+            category: document.getElementById('modalCategory'),
+            description: document.getElementById('modalDescription'),
+            img: document.getElementById('modalProductImage'),
+            sizeSelect: document.getElementById('modalSize'),
+            colorSelect: document.getElementById('modalColorSelect'),
+            quantity: document.getElementById('modalQuantity'),
+            addButton: document.querySelector('.add-to-cart-btn'),
+            originalPrice: document.getElementById('modalOriginalPrice'),
+            currentPrice: document.getElementById('modalCurrentPrice'),
+        };
+
+        let activeVariants = [];
+        let currentProductData = null;
+        let fallbackSizes = [];
+        let fallbackColors = [];
+        const toastNode = document.getElementById('homeToast');
+        let toastTimeout = null;
+
+        const showToast = (message, tone = 'neutral') => {
+            if (!toastNode) {
+                alert(message);
+                return;
+            }
+            toastNode.textContent = message;
+            toastNode.classList.remove('home-toast--success', 'home-toast--warning');
+            if (tone === 'success') {
+                toastNode.classList.add('home-toast--success');
+            } else if (tone === 'warning') {
+                toastNode.classList.add('home-toast--warning');
+            }
+            toastNode.classList.add('is-visible');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toastNode.classList.remove('is-visible');
+            }, 3200);
+        };
+
+        const parseOptionList = (value) =>
+            (value || '')
+                .split('|')
+                .map((entry) => entry.trim())
+                .filter(Boolean);
+
+        const safeParseVariants = (value) => {
+            try {
+                const parsed = JSON.parse(value ?? '[]');
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                return [];
+            }
+        };
+
+        const buildColorOptions = () => {
+            if (!modalElements.colorSelect) {
+                return [];
+            }
+
+            const variantColors = activeVariants
+                .map((variant) => variant.color)
+                .filter(Boolean);
+
+            const combined = Array.from(new Set([...variantColors, ...fallbackColors]));
+            const select = modalElements.colorSelect;
+            select.innerHTML = '';
+
+            if (combined.length === 0) {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'สีเดียว';
+                select.appendChild(option);
+                select.disabled = true;
+                return [];
+            }
+
+            select.disabled = false;
+            combined.forEach((color, index) => {
+                const option = document.createElement('option');
+                option.value = color;
+                option.textContent = color;
+                if (index === 0) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+            return combined;
+        };
+
+        const buildSizeOptions = (colorFilter) => {
+            if (!modalElements.sizeSelect) {
+                return [];
+            }
+
+            const variantSizes = activeVariants
+                .filter((variant) => !colorFilter || variant.color === colorFilter)
+                .map((variant) => variant.size ?? '')
+                .filter(Boolean);
+
+            const combined = Array.from(new Set([...variantSizes, ...fallbackSizes]));
+            const numericPattern = /^\d+(\.\d+)?$/;
+            const numericOnly = combined.filter((size) => numericPattern.test(size));
+            const select = modalElements.sizeSelect;
+            const previousValue = select.value;
+            select.innerHTML = '';
+
+            if (numericOnly.length === 0) {
+                select.disabled = true;
+                return [];
+            }
+
+            numericOnly.forEach((size, index) => {
+                const option = document.createElement('option');
+                option.value = size;
+                option.textContent = size;
+                if (index === 0) {
+                    option.selected = true;
+                }
+                select.appendChild(option);
+            });
+
+            if (previousValue && numericOnly.includes(previousValue)) {
+                select.value = previousValue;
+            }
+
+            select.disabled = false;
+            return numericOnly;
+        };
+
+        const getActiveVariant = () => {
+            if (!activeVariants.length) {
+                return null;
+            }
+            const selectedSize = modalElements.sizeSelect?.value || '';
+            const selectedColor = modalElements.colorSelect?.value || '';
+
+            let candidate = activeVariants.find(
+                (variant) =>
+                    (!selectedSize || variant.size === selectedSize) &&
+                    (!selectedColor || variant.color === selectedColor)
+            );
+
+            if (!candidate && selectedColor) {
+                candidate = activeVariants.find((variant) => variant.color === selectedColor);
+            }
+
+            if (!candidate && selectedSize) {
+                candidate = activeVariants.find((variant) => variant.size === selectedSize);
+            }
+
+            return candidate ?? activeVariants[0] ?? null;
+        };
+
+        const updateVariantDetails = () => {
+            if (!currentProductData) {
+                return;
+            }
+            const variant = getActiveVariant();
+            const selectedColor = modalElements.colorSelect?.value || '';
+            const resolvedStock =
+                typeof variant?.stockQuantity === 'number'
+                    ? variant.stockQuantity
+                    : currentProductData.productStock || 0;
+
+            modalElements.colorLabel.textContent =
+                selectedColor || variant?.color || currentProductData.productColor || '-';
+            modalElements.stock.textContent = typeof resolvedStock === 'number' ? resolvedStock : '-';
+
+            let currentQty = Number(modalElements.quantity.value) || 1;
+            if (typeof resolvedStock === 'number' && resolvedStock > 0) {
+                if (currentQty > resolvedStock) {
+                    currentQty = resolvedStock;
+                    modalElements.quantity.value = String(resolvedStock);
+                }
+            } else {
+                modalElements.quantity.value = '1';
+            }
+
+            if (modalElements.addButton) {
+                modalElements.addButton.disabled = !variant || (typeof variant.stockQuantity === 'number' && variant.stockQuantity <= 0);
+            }
+        };
+
+        const handleAddToCart = async () => {
+            if (!window.cartApi?.addItem) {
+                showToast('ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ในขณะนี้', 'warning');
+                return;
+            }
+
+            const variant = getActiveVariant();
+            if (!variant?.variantId) {
+                showToast('กรุณาเลือกสีและไซส์ที่พร้อมจำหน่าย', 'warning');
+                return;
+            }
+
+            const available = variant.stockQuantity ?? 0;
+            if (available <= 0) {
+                showToast('สินค้าหมดสต็อกแล้ว', 'warning');
+                return;
+            }
+
+            const quantity = Number(modalElements.quantity.value) || 1;
+            if (quantity > available) {
+                showToast(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`, 'warning');
+                modalElements.quantity.value = String(available);
+                return;
+            }
+
+            try {
+                const response = await fetch(window.cartApi.addItem, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        variantId: variant.variantId,
+                        quantity
+                    })
+                });
+                const result = await response.json();
+                if (!result.success) {
+                    showToast(result.message || 'ไม่สามารถเพิ่มสินค้าได้', 'warning');
+                    return;
+                }
+
+                variant.stockQuantity = result.item?.variantStock ?? available - quantity;
+                modalElements.quantity.value = '1';
+                updateVariantDetails();
+                showToast('เพิ่มสินค้าในตะกร้าเรียบร้อยแล้ว', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'warning');
+            }
+        };
+
+        const openModal = (card) => {
+            const data = { ...card.dataset };
+            currentProductData = data;
+
+            modalElements.name.textContent = data.productName ?? '';
+            modalElements.sku.textContent = data.productSku ?? '';
+            modalElements.category.textContent = data.productCategory ?? '-';
+            modalElements.description.textContent = data.productDescription || '';
+
+            modalElements.img.src = data.productImage || defaultModalImage;
+            modalElements.img.alt = data.productName ?? 'Selected shoe';
+
+            modalElements.quantity.value = '1';
+
+            activeVariants = safeParseVariants(data.productVariants);
+            fallbackSizes = parseOptionList(data.productSizes);
+            fallbackColors = parseOptionList(data.productColors);
+            const colorOptions = buildColorOptions();
+            const initialColor = modalElements.colorSelect?.value || colorOptions[0] || '';
+            buildSizeOptions(initialColor);
+            updateVariantDetails();
+
+            const basePrice = Number(data.productPrice ?? 0);
+            const salePrice = data.productSale ? Number(data.productSale) : null;
+
+            modalElements.currentPrice.textContent = formatPrice(salePrice ?? basePrice);
+            modalElements.originalPrice.textContent = salePrice ? formatPrice(basePrice) : '';
+
+            modal.classList.add('is-visible');
+            body.classList.add('modal-open');
+            modal.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeModal = () => {
+            modal.classList.remove('is-visible');
+            body.classList.remove('modal-open');
+            modal.setAttribute('aria-hidden', 'true');
+            currentProductData = null;
+            activeVariants = [];
+        };
+
+        document.querySelectorAll('.product-card').forEach((card) => {
+            const trigger = () => openModal(card);
+            card.addEventListener('click', trigger);
+            card.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    trigger();
+                }
+            });
+        });
+
+        modal.querySelectorAll('[data-modal-close]').forEach((btn) => {
+            btn.addEventListener('click', closeModal);
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && modal.classList.contains('is-visible')) {
+                closeModal();
+            }
+        });
+
+        modalElements.colorSelect?.addEventListener('change', () => {
+            const selectedColor = modalElements.colorSelect?.value || '';
+            buildSizeOptions(selectedColor);
+            updateVariantDetails();
+        });
+        modalElements.sizeSelect?.addEventListener('change', updateVariantDetails);
+        modalElements.addButton?.addEventListener('click', handleAddToCart);
+
+        const adjustQuantity = (direction) => {
+            let current = Number(modalElements.quantity.value) || 1;
+            const variant = getActiveVariant();
+            const available = variant?.stockQuantity ?? Infinity;
+
+            if (direction === 'minus') {
+                current = Math.max(1, current - 1);
+                modalElements.quantity.value = String(current);
+                return;
+            }
+
+            if (direction === 'plus') {
+                if (Number.isFinite(available) && available <= current) {
+                    showToast(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`, 'warning');
+                    return;
+                }
+                modalElements.quantity.value = String(current + 1);
+            }
+        };
+
+        modal.querySelectorAll('.qty-btn').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const action = btn.dataset.qtyAction;
+                if (!action) {
+                    return;
+                }
+                adjustQuantity(action);
+            });
+        });
+
+        initGridControls();
+    })();
+</script>

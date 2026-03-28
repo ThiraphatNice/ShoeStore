@@ -1,9 +1,150 @@
+@model ShoeStore.ViewModels.Product.ProductSearchViewModel
+@using ShoeStore.ViewModels.Home
 @{
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Search";
+    var queryValue = Model.Query ?? string.Empty;
 }
 
-<div class="container mt-5">
-    <h1>Products</h1>
-    <p>Here you can browse our shoe collection.</p>
-    <!-- Placeholder for product list -->
-</div>
+@section Styles {
+    @await Html.PartialAsync("_ProductCatalogStyles")
+    <style>
+        .search-hero {
+            text-align: center;
+            padding: 36px 0 12px;
+        }
+
+        .search-hero h1 {
+            font-size: clamp(2rem, 3.5vw, 2.5rem);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .search-hero p {
+            color: #7f7f7f;
+            margin-bottom: 24px;
+        }
+
+        .search-form {
+            max-width: 560px;
+            margin: 0 auto 12px;
+            display: flex;
+            gap: 12px;
+            padding: 8px;
+            background: #fff;
+            border-radius: 999px;
+            box-shadow: 0 8px 26px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-form input[type="text"] {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 1rem;
+            padding: 8px 4px 8px 16px;
+            background: transparent;
+        }
+
+        .search-form button {
+            border-radius: 999px;
+            background: #b53636;
+            color: #fff;
+            border: none;
+            padding: 10px 26px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-form button:hover,
+        .search-form button:focus-visible {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(181, 54, 54, 0.25);
+        }
+
+        .search-state {
+            background: #fff;
+            border-radius: 28px;
+            padding: 32px;
+            text-align: center;
+            margin: 36px auto;
+            max-width: 720px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .search-state h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .search-state p {
+            color: #6f6f6f;
+            margin-bottom: 0;
+        }
+
+        .result-summary {
+            margin-top: 28px;
+            font-weight: 600;
+            color: #a03b3b;
+        }
+    </style>
+}
+
+<section class="search-hero">
+    <h1>ค้นหาสินค้า</h1>
+    <p>ค้นหาจากรหัสสินค้า ชื่อสินค้า หรือประเภทสินค้า</p>
+    <form method="get" class="search-form" role="search">
+        <input type="text" name="q" value="@queryValue" placeholder="เช่น TS-006, Air Force, Limited Edition" aria-label="Search products" />
+        <button type="submit">ค้นหา</button>
+    </form>
+    @if (Model.HasQuery)
+    {
+        <p class="result-summary">ผลการค้นหา "@Model.Query" - @Model.ResultCount รายการ</p>
+    }
+</section>
+
+@if (!Model.HasQuery)
+{
+    <div class="search-state">
+        <h2>เริ่มค้นหารองเท้าคู่โปรด</h2>
+        <p>พิมพ์รหัสสินค้า (เช่น 6 หรือ TS-006), ชื่อสินค้า หรือชื่อหมวดหมู่เพื่อค้นหา</p>
+    </div>
+}
+else if (Model.ResultCount == 0)
+{
+    <div class="search-state">
+        <h2>ไม่พบสินค้าที่ตรงกับ "@Model.Query"</h2>
+        <p>ลองตรวจสอบการสะกดหรือค้นหาด้วยคำที่สั้นลง เช่นชื่อหมวดหมู่</p>
+    </div>
+}
+else
+{
+    var resultsSection = new HomeSectionViewModel
+    {
+        Title = "ผลการค้นหา",
+        Products = Model.Results
+    };
+    @await Html.PartialAsync("~/Views/Shared/_ProductSection.cshtml", resultsSection)
+}
+
+@if ((!Model.HasQuery || Model.ResultCount == 0) && Model.SuggestedProducts.Any())
+{
+    var suggestionSection = new HomeSectionViewModel
+    {
+        Title = "แนะนำสำหรับคุณ",
+        Products = Model.SuggestedProducts
+    };
+    @await Html.PartialAsync("~/Views/Shared/_ProductSection.cshtml", suggestionSection)
+}
+
+@await Html.PartialAsync("_ProductModal")
+
+@section Scripts {
+    <script>
+        window.cartApi = Object.assign(window.cartApi || {}, {
+            addItem: '@Url.Action("AddItem", "Cart")'
+        });
+    </script>
+    @await Html.PartialAsync("_ProductCatalogScripts")
+}
+
+

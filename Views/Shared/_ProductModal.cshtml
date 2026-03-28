@@ -1,0 +1,48 @@
+<div class="product-modal" id="productModal" aria-hidden="true">
+    <div class="product-modal__backdrop" data-modal-close></div>
+    <div class="product-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modalProductName">
+        <button class="modal-close" type="button" data-modal-close aria-label="Close">&times;</button>
+        <div class="modal-body">
+            <div class="modal-left">
+                <div class="modal-image">
+                    <img id="modalProductImage" src="" alt="Selected shoe" />
+                </div>
+                <div class="modal-control modal-select-group">
+                    <div class="select-wrapper">
+                        <label for="modalSize" class="form-label">เลือกไซส์</label>
+                        <select id="modalSize" class="form-select"></select>
+                    </div>
+                    <div class="select-wrapper">
+                        <label for="modalColorSelect" class="form-label">เลือกสี</label>
+                        <select id="modalColorSelect" class="form-select"></select>
+                    </div>
+                </div>
+                <div class="modal-control">
+                    <label class="form-label">จำนวน</label>
+                    <div class="qty-control">
+                        <button class="qty-btn" type="button" data-qty-action="minus">-</button>
+                        <input id="modalQuantity" type="text" value="1" readonly>
+                        <button class="qty-btn" type="button" data-qty-action="plus">+</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-right">
+                <p class="text-muted mb-1">รหัสสินค้า: <span id="modalSku"></span></p>
+                <h3 id="modalProductName"></h3>
+                <p class="modal-description" id="modalDescription"></p>
+                <ul class="modal-meta">
+                    <li><span>สี</span><strong id="modalColorValue"></strong></li>
+                    <li><span>สต็อก</span><strong id="modalStock"></strong></li>
+                    <li><span>หมวดหมู่</span><strong id="modalCategory"></strong></li>
+                </ul>
+                <div class="modal-price">
+                    <span class="modal-price__current" id="modalCurrentPrice"></span>
+                    <span class="modal-price__original" id="modalOriginalPrice"></span>
+                </div>
+                <button class="btn btn-auth-primary add-to-cart-btn" type="button">เพิ่มสินค้าในตะกร้า</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="home-toast" id="homeToast" aria-live="polite"></div>

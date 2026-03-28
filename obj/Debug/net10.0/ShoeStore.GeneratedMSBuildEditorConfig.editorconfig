@@ -74,10 +74,6 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcml2YWN5LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
-[d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Home/_ProductSection.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxfUHJvZHVjdFNlY3Rpb24uY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
 [d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Order/Details.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JkZXJcRGV0YWlscy5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -96,6 +92,22 @@ build_metadata.AdditionalFiles.CssScope =
 
 [d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Shared/Error.cshtml]
 build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Shared/_ProductCatalogScripts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9kdWN0Q2F0YWxvZ1NjcmlwdHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Shared/_ProductCatalogStyles.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9kdWN0Q2F0YWxvZ1N0eWxlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Shared/_ProductModal.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9kdWN0TW9kYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Shared/_ProductSection.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9kdWN0U2VjdGlvbi5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
 [d:/VSCodeWork/Year3/CSI402/Project/ShoeStore/Views/Shared/_ValidationScriptsPartial.cshtml]
