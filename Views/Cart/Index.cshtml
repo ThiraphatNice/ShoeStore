@@ -201,6 +201,22 @@
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
         }
 
+        .btn-empty-shop {
+            background: #b53636;
+            color: #fff;
+            border: none;
+            border-radius: 18px;
+            padding: 10px 26px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn-empty-shop:hover {
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 24px rgba(181, 54, 54, 0.25);
+        }
+
         .cart-confirm-modal {
             position: fixed;
             inset: 0;
@@ -374,13 +390,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="cart-confirm-modal" id="cartStockAlert">
+            <div class="cart-confirm-modal__backdrop" data-alert-close></div>
+            <div class="cart-confirm-modal__dialog">
+                <h4>สินค้าหมดสต็อก!</h4>
+                <p id="cartStockAlertMessage" class="text-muted mb-3">จำนวนที่ต้องการมากกว่าสต็อกที่มีอยู่</p>
+                <div class="cart-confirm-modal__actions">
+                    <button type="button" class="cart-btn cart-btn--danger" data-alert-close>ปิดหน้าต่าง</button>
+                </div>
+            </div>
+        </div>
     }
     else
     {
         <div class="cart-empty text-center">
             <h2 class="mb-3">ยังไม่มีสินค้าในตะกร้า</h2>
             <p class="text-muted mb-4">เลือกสินค้าถูกใจจากหน้า Home แล้วกดเพิ่มเข้าตะกร้าได้เลย</p>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-primary px-4">ไปช็อปสินค้า</a>
+            <a asp-controller="Home" asp-action="Index" class="btn-empty-shop">ไปช็อปสินค้า</a>
         </div>
     }
 </div>
@@ -401,6 +428,9 @@
             const confirmMessage = document.getElementById('cartConfirmMessage');
             const confirmAccept = document.getElementById('cartConfirmYes');
             const confirmCloseButtons = document.querySelectorAll('[data-confirm-close]');
+            const stockAlertModal = document.getElementById('cartStockAlert');
+            const stockAlertMessage = document.getElementById('cartStockAlertMessage');
+            const stockAlertClosers = document.querySelectorAll('[data-alert-close]');
             let pendingRemovalCard = null;
 
             if (!cartList || !window.cartApi) {
@@ -443,6 +473,24 @@
                 removeItem(pendingRemovalCard);
             });
 
+            const toggleStockAlert = (shouldOpen, message) => {
+                if (!stockAlertModal) {
+                    return;
+                }
+                if (message && stockAlertMessage) {
+                    stockAlertMessage.textContent = message;
+                }
+                stockAlertModal.classList.toggle('is-visible', shouldOpen);
+            };
+
+            stockAlertClosers.forEach((btn) =>
+                btn.addEventListener('click', () => toggleStockAlert(false))
+            );
+
+            const showStockAlert = (message) => {
+                toggleStockAlert(true, message || 'สินค้าหมดสต็อก!');
+            };
+
             const formatCurrency = (value) =>
                 `${new Intl.NumberFormat('th-TH').format(value)} บาท`;
 
@@ -470,7 +518,12 @@
                     });
                     const result = await response.json();
                     if (!result.success) {
-                        alert(result.message || 'ไม่สามารถอัปเดตจำนวนได้');
+                        const message = result.message || 'ไม่สามารถอัปเดตจำนวนได้';
+                        if (/สต็อก|เพิ่มได้สูงสุด|หมด/i.test(message)) {
+                            showStockAlert(message);
+                        } else {
+                            alert(message);
+                        }
                         return;
                     }
 
@@ -546,13 +599,12 @@
                 }
                 const qtyNode = card.querySelector('[data-role="quantity"]');
                 const currentQty = Number(qtyNode?.textContent) || 1;
-                const maxStock = Number(card.dataset.stock) || 0;
 
                 let nextQty = currentQty;
                 if (action === 'minus') {
                     nextQty = Math.max(1, currentQty - 1);
                 } else if (action === 'plus') {
-                    nextQty = maxStock > 0 ? Math.min(currentQty + 1, maxStock) : currentQty + 1;
+                    nextQty = currentQty + 1;
                 }
 
                 if (nextQty !== currentQty) {
