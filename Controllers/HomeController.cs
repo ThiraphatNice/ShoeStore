@@ -116,6 +116,7 @@ public class HomeController : Controller
             .ThenBy(v => v.Color)
             .Select(v => new ProductVariantSummaryViewModel
             {
+                VariantId = v.Id,
                 Size = v.Size,
                 Color = v.Color,
                 StockQuantity = v.StockQuantity ?? 0

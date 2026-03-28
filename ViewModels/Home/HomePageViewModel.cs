@@ -47,9 +47,12 @@ namespace ShoeStore.ViewModels.Home
 
     public class ProductVariantSummaryViewModel
     {
+        public int VariantId { get; set; }
+
         public string? Size { get; set; }
         public string? Color { get; set; }
         public int StockQuantity { get; set; }
     }
 }
+
 

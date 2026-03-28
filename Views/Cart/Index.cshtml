@@ -1,9 +1,432 @@
+@model ShoeStore.ViewModels.Cart.CartPageViewModel
 @{
-    ViewData["Title"] = "Shopping Cart";
+    ViewData["Title"] = "Your Cart";
 }
 
-<div class="container mt-5">
-    <h1>Shopping Cart</h1>
-    <p>Your cart is empty.</p>
-    <!-- Placeholder for cart items -->
+@section Styles {
+    <style>
+        .cart-hero {
+            text-align: center;
+            padding: 32px 0 16px;
+        }
+
+        .cart-hero h1 {
+            font-size: clamp(2rem, 4vw, 2.6rem);
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .cart-hero p {
+            color: #6a6a6a;
+            margin: 0;
+        }
+
+        .cart-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .cart-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            background: #fff;
+            border-radius: 28px;
+            padding: 18px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .cart-card__media {
+            width: 140px;
+            aspect-ratio: 1;
+            border-radius: 22px;
+            background: radial-gradient(circle at top, #fff7f5, #fbded8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .cart-card__media img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .cart-card__body {
+            flex: 1;
+            min-width: 240px;
+        }
+
+        .cart-card__title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .cart-card__meta {
+            color: #7a7a7a;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .cart-card__meta span + span {
+            margin-left: 12px;
+        }
+
+        .cart-card__pricing {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 12px;
+        }
+
+        .cart-card__pricing .original {
+            text-decoration: line-through;
+            color: #9a9a9a;
+            font-size: 0.9rem;
+        }
+
+        .cart-card__pricing .current {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #b53636;
+        }
+
+        .cart-card__pricing .line-total {
+            font-size: 1rem;
+            color: #333;
+        }
+
+        .cart-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .qty-control {
+            display: inline-flex;
+            align-items: center;
+            border: 1px solid #e2e2e2;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .qty-control button {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #fff;
+            color: #b53636;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .qty-control span {
+            width: 40px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .cart-card__trash {
+            border: none;
+            background: rgba(181, 54, 54, 0.12);
+            color: #b53636;
+            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+        }
+
+        .cart-card__stock {
+            font-size: 0.85rem;
+            color: #7a7a7a;
+        }
+
+        .cart-summary {
+            background: #fff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.08);
+        }
+
+        .cart-summary__row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 18px;
+        }
+
+        .cart-summary select {
+            width: 100%;
+            border-radius: 16px;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 18px;
+        }
+
+        .btn-pay {
+            width: 100%;
+            border: none;
+            border-radius: 18px;
+            padding: 12px 16px;
+            background: #b53636;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .cart-empty {
+            background: #fff;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.06);
+        }
+
+        @@media (max-width: 576px) {
+            .cart-card__media {
+                width: 100%;
+            }
+
+            .cart-card {
+                flex-direction: column;
+            }
+        }
+    </style>
+}
+
+<div class="container py-4 cart-page">
+    <section class="cart-hero">
+        <h1>Your Cart</h1>
+        <p>สินค้าในตะกร้าตอนนี้ : <span id="cartItemCount">@Model.TotalItems</span> ชิ้น</p>
+    </section>
+
+    @if (Model.HasItems)
+    {
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-8">
+                <div class="cart-list">
+                    @foreach (var item in Model.Items)
+                    {
+                        <article class="cart-card"
+                                 data-cart-id="@item.CartItemId"
+                                 data-variant-id="@item.VariantId"
+                                 data-stock="@item.StockAvailable">
+                            <div class="cart-card__media">
+                                <img src="@item.ImageOrPlaceholder"
+                                     alt="@item.ProductName"
+                                     loading="lazy" />
+                            </div>
+                            <div class="cart-card__body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <p class="cart-card__title mb-0">@item.ProductName</p>
+                                        @if (item.IsLimited)
+                                        {
+                                            <span class="badge text-bg-danger rounded-pill">Limited</span>
+                                        }
+                                    </div>
+                                    <button type="button"
+                                            class="cart-card__trash"
+                                            data-action="remove"
+                                            aria-label="ลบสินค้าออกจากตะกร้า">
+                                        🗑️
+                                    </button>
+                                </div>
+                                <div class="cart-card__meta">
+                                    <span>สี : @item.Color</span>
+                                    <span>ไซส์ : @item.Size</span>
+                                    <span>หมวดหมู่ : @item.CategoryName</span>
+                                </div>
+                                <div class="cart-card__pricing">
+                                    @if (!string.IsNullOrEmpty(item.OriginalPriceDisplay))
+                                    {
+                                        <span class="original">@item.OriginalPriceDisplay</span>
+                                    }
+                                    <span class="current">@item.PriceDisplay</span>
+                                    <span class="line-total" data-role="lineTotal">@($"{item.LineTotal:N0}.-")</span>
+                                </div>
+                                <div class="cart-controls">
+                                    <div class="qty-control" aria-label="ปรับจำนวนสินค้า">
+                                        <button type="button" data-qty-action="minus" aria-label="ลดจำนวน">-</button>
+                                        <span data-role="quantity">@item.Quantity</span>
+                                        <button type="button" data-qty-action="plus" aria-label="เพิ่มจำนวน">+</button>
+                                    </div>
+                                    <small class="cart-card__stock" data-role="stock">คงเหลือ @item.StockAvailable ชิ้น</small>
+                                </div>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <aside class="cart-summary">
+                    <div class="cart-summary__row">
+                        <span>ราคาสุทธิทั้งหมด</span>
+                        <strong id="cartTotal">@Model.TotalAmountDisplay</strong>
+                    </div>
+                    <p class="text-muted small">ซื้อสินค้าครบ 3,000 บาท ขึ้นไป ฟรีค่าจัดส่ง!</p>
+                    <label class="form-label mt-3">เลือกช่องทางชำระเงิน</label>
+                    <select id="paymentMethod">
+                        <option value="">โปรดเลือกวิธีชำระเงิน</option>
+                        @foreach (var method in Model.PaymentOptions)
+                        {
+                            <option value="@method">@method</option>
+                        }
+                    </select>
+                    <button type="button" class="btn-pay" disabled>ชำระเงิน</button>
+                    <p class="text-muted small mt-3 mb-0">* ระบบชำระเงินจะเปิดใช้งานเร็ว ๆ นี้</p>
+                </aside>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="cart-empty text-center">
+            <h2 class="mb-3">ยังไม่มีสินค้าในตะกร้า</h2>
+            <p class="text-muted mb-4">เลือกสินค้าถูกใจจากหน้า Home แล้วกดเพิ่มเข้าตะกร้าได้เลย</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary px-4">ไปช็อปสินค้า</a>
+        </div>
+    }
 </div>
+
+@section Scripts {
+    <script>
+        window.cartApi = Object.assign(window.cartApi || {}, {
+            updateItem: '@Url.Action("UpdateItem", "Cart")',
+            removeItem: '@Url.Action("RemoveItem", "Cart")'
+        });
+    </script>
+    <script>
+        (() => {
+            const cartList = document.querySelector('.cart-list');
+            const totalLabel = document.getElementById('cartTotal');
+            const itemCountLabel = document.getElementById('cartItemCount');
+            if (!cartList || !window.cartApi) {
+                return;
+            }
+
+            const formatCurrency = (value) =>
+                `${new Intl.NumberFormat('th-TH').format(value)} บาท`;
+
+            const handleTotals = (totals) => {
+                if (totals?.totalAmount !== undefined) {
+                    totalLabel.textContent = totals.totalAmountDisplay ?? formatCurrency(totals.totalAmount);
+                }
+                if (typeof totals?.totalItems === 'number') {
+                    itemCountLabel.textContent = totals.totalItems;
+                }
+            };
+
+            const updateQuantity = async (card, nextQuantity) => {
+                const cartId = Number(card.dataset.cartId);
+                if (!cartId) {
+                    return;
+                }
+                const payload = { cartItemId: cartId, quantity: nextQuantity };
+
+                try {
+                    const response = await fetch(window.cartApi.updateItem, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        alert(result.message || 'ไม่สามารถอัปเดตจำนวนได้');
+                        return;
+                    }
+
+                    const quantityNode = card.querySelector('[data-role="quantity"]');
+                    const lineTotalNode = card.querySelector('[data-role="lineTotal"]');
+                    const stockNode = card.querySelector('[data-role="stock"]');
+
+                    if (quantityNode) {
+                        quantityNode.textContent = result.item.quantity;
+                    }
+                    if (lineTotalNode) {
+                        lineTotalNode.textContent = `${new Intl.NumberFormat('th-TH').format(result.item.lineTotal ?? 0)}.-`;
+                    }
+                    if (stockNode) {
+                        stockNode.textContent = `คงเหลือ ${result.item.variantStock} ชิ้น`;
+                        card.dataset.stock = result.item.variantStock;
+                    }
+
+                    handleTotals(result.totals);
+                } catch (error) {
+                    console.error(error);
+                    alert('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+                }
+            };
+
+            const removeItem = async (card) => {
+                const cartId = Number(card.dataset.cartId);
+                if (!cartId) {
+                    return;
+                }
+                const confirmed = confirm('ต้องการลบสินค้าออกจากตะกร้าหรือไม่?');
+                if (!confirmed) {
+                    return;
+                }
+                try {
+                    const response = await fetch(window.cartApi.removeItem, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ cartItemId: cartId }),
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        alert(result.message || 'ไม่สามารถลบสินค้าได้');
+                        return;
+                    }
+                    card.remove();
+                    handleTotals(result.totals);
+
+                    if (!cartList.querySelector('.cart-card')) {
+                        location.reload();
+                    }
+                } catch (error) {
+                    console.error(error);
+                    alert('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+                }
+            };
+
+            cartList.addEventListener('click', (event) => {
+                const button = event.target.closest('button');
+                if (!button) {
+                    return;
+                }
+                const card = button.closest('.cart-card');
+                if (!card) {
+                    return;
+                }
+
+                if (button.dataset.action === 'remove') {
+                    removeItem(card);
+                    return;
+                }
+
+                const action = button.dataset.qtyAction;
+                if (!action) {
+                    return;
+                }
+                const qtyNode = card.querySelector('[data-role="quantity"]');
+                const currentQty = Number(qtyNode?.textContent) || 1;
+                const maxStock = Number(card.dataset.stock) || 0;
+
+                let nextQty = currentQty;
+                if (action === 'minus') {
+                    nextQty = Math.max(1, currentQty - 1);
+                } else if (action === 'plus') {
+                    nextQty = maxStock > 0 ? Math.min(currentQty + 1, maxStock) : currentQty + 1;
+                }
+
+                if (nextQty !== currentQty) {
+                    updateQuantity(card, nextQty);
+                }
+            });
+        })();
+    </script>
+}

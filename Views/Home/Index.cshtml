@@ -532,6 +532,11 @@
 
 @section Scripts {
     <script>
+        window.cartApi = Object.assign(window.cartApi || {}, {
+            addItem: '@Url.Action("AddItem", "Cart")'
+        });
+    </script>
+    <script>
         (() => {
             const body = document.body;
             const modal = document.getElementById('productModal');
@@ -638,6 +643,7 @@
                 sizeSelect: document.getElementById('modalSize'),
                 colorSelect: document.getElementById('modalColorSelect'),
                 quantity: document.getElementById('modalQuantity'),
+                addButton: document.querySelector('.add-to-cart-btn'),
                 originalPrice: document.getElementById('modalOriginalPrice'),
                 currentPrice: document.getElementById('modalCurrentPrice'),
             };
@@ -735,31 +741,108 @@
                 return combined;
             };
 
-            const updateVariantDetails = () => {
-                if (!currentProductData) {
-                    return;
+            const getActiveVariant = () => {
+                if (!activeVariants.length) {
+                    return null;
                 }
                 const selectedSize = modalElements.sizeSelect?.value || '';
                 const selectedColor = modalElements.colorSelect?.value || '';
-                let candidate = null;
-                if (selectedSize && selectedColor) {
-                    candidate = activeVariants.find(
-                        (variant) => variant.size === selectedSize && variant.color === selectedColor
-                    );
-                }
+
+                let candidate = activeVariants.find(
+                    (variant) =>
+                        (!selectedSize || variant.size === selectedSize) &&
+                        (!selectedColor || variant.color === selectedColor)
+                );
+
                 if (!candidate && selectedColor) {
                     candidate = activeVariants.find((variant) => variant.color === selectedColor);
                 }
+
                 if (!candidate && selectedSize) {
                     candidate = activeVariants.find((variant) => variant.size === selectedSize);
                 }
 
+                return candidate ?? activeVariants[0] ?? null;
+            };
+
+            const updateVariantDetails = () => {
+                if (!currentProductData) {
+                    return;
+                }
+                const selectedColor = modalElements.colorSelect?.value || '';
+                const variant = getActiveVariant();
+                const resolvedStock =
+                    typeof variant?.stockQuantity === 'number'
+                        ? variant.stockQuantity
+                        : currentProductData.productStock || 0;
+
                 modalElements.colorLabel.textContent =
-                    selectedColor || candidate?.color || currentProductData.productColor || '-';
-                modalElements.stock.textContent =
-                    typeof candidate?.stockQuantity === 'number'
-                        ? candidate.stockQuantity
-                        : currentProductData.productStock || '-';
+                    selectedColor || variant?.color || currentProductData.productColor || '-';
+                modalElements.stock.textContent = typeof resolvedStock === 'number' ? resolvedStock : '-';
+
+                let currentQty = Number(modalElements.quantity.value) || 1;
+                if (typeof resolvedStock === 'number' && resolvedStock > 0) {
+                    if (currentQty > resolvedStock) {
+                        currentQty = resolvedStock;
+                        modalElements.quantity.value = String(resolvedStock);
+                    }
+                } else {
+                    modalElements.quantity.value = '1';
+                }
+
+                if (modalElements.addButton) {
+                    modalElements.addButton.disabled = !variant || (typeof variant.stockQuantity === 'number' && variant.stockQuantity <= 0);
+                }
+            };
+
+            const handleAddToCart = async () => {
+                if (!window.cartApi?.addItem) {
+                    alert('ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ในขณะนี้');
+                    return;
+                }
+
+                const variant = getActiveVariant();
+                if (!variant?.variantId) {
+                    alert('กรุณาเลือกสีและไซส์ที่พร้อมจำหน่าย');
+                    return;
+                }
+
+                const available = variant.stockQuantity ?? 0;
+                if (available <= 0) {
+                    alert('สินค้าหมดสต็อกแล้ว');
+                    return;
+                }
+
+                const quantity = Number(modalElements.quantity.value) || 1;
+                if (quantity > available) {
+                    alert(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`);
+                    modalElements.quantity.value = String(available);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(window.cartApi.addItem, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            variantId: variant.variantId,
+                            quantity
+                        })
+                    });
+                    const result = await response.json();
+                    if (!result.success) {
+                        alert(result.message || 'ไม่สามารถเพิ่มสินค้าได้');
+                        return;
+                    }
+
+                    variant.stockQuantity = result.item?.variantStock ?? available - quantity;
+                    modalElements.quantity.value = '1';
+                    updateVariantDetails();
+                    alert('เพิ่มสินค้าในตะกร้าเรียบร้อยแล้ว');
+                } catch (error) {
+                    console.error(error);
+                    alert('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง');
+                }
             };
 
             const openModal = (card) => {
@@ -829,17 +912,35 @@
                 buildSizeOptions(modalElements.colorSelect.value);
                 updateVariantDetails();
             });
+            modalElements.addButton?.addEventListener('click', handleAddToCart);
+
+            const adjustQuantity = (direction) => {
+                let current = Number(modalElements.quantity.value) || 1;
+                const variant = getActiveVariant();
+                const available = variant?.stockQuantity ?? Infinity;
+
+                if (direction === 'minus') {
+                    current = Math.max(1, current - 1);
+                    modalElements.quantity.value = String(current);
+                    return;
+                }
+
+                if (direction === 'plus') {
+                    if (Number.isFinite(available) && available <= current) {
+                        alert(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`);
+                        return;
+                    }
+                    modalElements.quantity.value = String(current + 1);
+                }
+            };
 
             modal.querySelectorAll('.qty-btn').forEach((btn) => {
                 btn.addEventListener('click', () => {
                     const action = btn.dataset.qtyAction;
-                    let current = Number(modalElements.quantity.value) || 1;
-                    if (action === 'minus') {
-                        current = Math.max(1, current - 1);
-                    } else {
-                        current += 1;
+                    if (!action) {
+                        return;
                     }
-                    modalElements.quantity.value = String(current);
+                    adjustQuantity(action);
                 });
             });
 
