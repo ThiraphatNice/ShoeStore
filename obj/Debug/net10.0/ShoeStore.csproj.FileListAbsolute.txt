@@ -185,3 +185,5 @@ D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\bin\Debug\net10.0\zh-Hant\Microsoft
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.csproj.AssemblyReference.cache
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\ShoeStore.csproj.Up2Date
 D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\jhvbocaw8t-{0}-18y1t025oz-18y1t025oz.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\it6r94juo6-{0}-8ts4qzwuvo-8ts4qzwuvo.gz
+D:\VSCodeWork\Year3\CSI402\Project\ShoeStore\obj\Debug\net10.0\compressed\oi30ra3eeb-{0}-p9jp3vsotl-p9jp3vsotl.gz

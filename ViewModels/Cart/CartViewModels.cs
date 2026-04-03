@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
@@ -93,3 +93,4 @@ namespace ShoeStore.ViewModels.Cart
         public int CartItemId { get; set; }
     }
 }
+

@@ -1,10 +1,11 @@
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ShoeStore.Models.db;
 using ShoeStore.ViewModels.Cart;
 using System.Security.Claims;
-using System.Linq;
 
 namespace ShoeStore.Controllers
 {
@@ -41,6 +42,20 @@ namespace ShoeStore.Controllers
             };
 
             return View(model);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> CheckProfileStatus()
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            var status = BuildProfileStatus(user);
+            status.ProfileUrl = Url.Action("Profile", "Account");
+            return Json(status);
         }
 
         [HttpPost]
@@ -317,6 +332,44 @@ namespace ShoeStore.Controllers
             }
 
             return int.TryParse(userIdClaim, out var userId) ? userId : null;
+        }
+
+        private async Task<User?> GetCurrentUserAsync()
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return null;
+            }
+
+            return await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        }
+
+        private static ProfileStatusViewModel BuildProfileStatus(User user)
+        {
+            var missing = new List<string>();
+            if (string.IsNullOrWhiteSpace(user.Fullname))
+            {
+                missing.Add("ชื่อ-นามสกุล");
+            }
+            if (string.IsNullOrWhiteSpace(user.Email))
+            {
+                missing.Add("อีเมล");
+            }
+            if (string.IsNullOrWhiteSpace(user.Phone))
+            {
+                missing.Add("เบอร์โทร");
+            }
+            if (string.IsNullOrWhiteSpace(user.Address))
+            {
+                missing.Add("ที่อยู่");
+            }
+
+            return new ProfileStatusViewModel
+            {
+                IsComplete = missing.Count == 0,
+                MissingFields = missing
+            };
         }
     }
 }

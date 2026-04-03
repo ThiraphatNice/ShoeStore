@@ -1,9 +1,252 @@
+﻿@model ShoeStore.ViewModels.Order.OrderHistoryPageViewModel
+@using System.Linq
 @{
-    ViewData["Title"] = "Orders";
+    ViewData["Title"] = "Your Orders";
 }
 
-<div class="container mt-5">
-    <h1>Orders</h1>
-    <p>Your order history.</p>
-    <!-- Placeholder for order list -->
+@section Styles {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        .orders-hero {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .orders-hero h1 {
+            font-weight: 700;
+            font-size: clamp(2rem, 4vw, 2.8rem);
+        }
+
+        .orders-hero p {
+            color: #7a7a7a;
+        }
+
+        .order-card {
+            display: flex;
+            background: #fff;
+            border-radius: 26px;
+            padding: 18px;
+            margin-bottom: 18px;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+            gap: 16px;
+            align-items: center;
+        }
+
+        .order-card__image {
+            width: 110px;
+            height: 110px;
+            border-radius: 22px;
+            background: radial-gradient(circle at top, #fff9f6, #ffe1d9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .order-card__image img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .order-card__body {
+            flex: 1;
+        }
+
+        .order-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 0.25rem 0.9rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .order-status--packing {
+            background: #fff4d9;
+            color: #ad6a00;
+        }
+
+        .order-status--delivering {
+            background: #e1f3ff;
+            color: #0b6ea4;
+        }
+
+        .order-status--done {
+            background: #e3f8ec;
+            color: #167a3f;
+        }
+
+        .order-empty {
+            background: #fff;
+            border-radius: 26px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.08);
+        }
+
+        .timeline {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-step {
+            flex: 1;
+            text-align: center;
+        }
+
+        .timeline-step .icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #f1b3b3;
+            color: #b53636;
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-step.active .icon {
+            background: #b53636;
+            color: #fff;
+            border-color: #b53636;
+        }
+
+        .timeline-step span {
+            display: block;
+            font-weight: 600;
+        }
+
+        .detail-section {
+            background: #fff8f6;
+            border-radius: 18px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-section h6 {
+            font-weight: 700;
+        }
+    </style>
+}
+
+<div class="container py-4">
+    <header class="orders-hero">
+        <p class="eyebrow">Order History</p>
+        <h1>Your Orders</h1>
+        <p>กำลังจัดส่ง : @Model.ItemsShipping ชิ้น • จัดส่งแล้ว : @Model.ItemsCompleted ชิ้น</p>
+    </header>
+
+    @if (Model.HasOrders)
+    {
+        foreach (var order in Model.Orders)
+        {
+            var coverImage = order.Items.FirstOrDefault()?.ImageUrl ?? "/img/placeholder-shoe.svg";
+            var statusClass = order.ShippingStatus switch
+            {
+                "delivering" => "order-status order-status--delivering",
+                "done" => "order-status order-status--done",
+                _ => "order-status order-status--packing"
+            };
+            var statusText = order.ShippingStatus switch
+            {
+                "delivering" => "กำลังจัดส่ง",
+                "done" => "จัดส่งแล้ว",
+                _ => "กำลังแพ็คสินค้า"
+            };
+            <article class="order-card">
+                <div class="order-card__image">
+                    <img src="@coverImage" alt="@order.OrderNumber" />
+                </div>
+                <div class="order-card__body">
+                    <div class="d-flex justify-content-between flex-wrap gap-2">
+                        <div>
+                            <h4 class="mb-1">@order.OrderNumber</h4>
+                            <p class="text-muted mb-1">@order.CreatedAtDisplay</p>
+                            <p class="mb-1">วิธีชำระเงิน : <strong>@order.PaymentMethod</strong></p>
+                            @if (!string.IsNullOrWhiteSpace(order.CouponCode))
+                            {
+                                <span class="badge text-bg-light">Coupon: @order.CouponCode</span>
+                            }
+                        </div>
+                        <div class="text-end">
+                            <span class="@statusClass">@statusText</span>
+                            <p class="fs-5 fw-bold mb-0">@order.FinalAmountDisplay</p>
+                        </div>
+                    </div>
+                    <p class="small text-muted mt-2">@string.Join(" • ", order.Items.Select(i => i.DisplayLine))</p>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button class="btn btn-sm btn-outline-secondary" data-order-detail data-order-id="@order.OrderId">ดูรายละเอียด</button>
+                        <a asp-action="Details" asp-route-id="@order.OrderId" class="btn btn-sm btn-primary">หน้าเต็ม</a>
+                    </div>
+                </div>
+            </article>
+        }
+    }
+    else
+    {
+        <div class="order-empty">
+            <h3>ยังไม่มีคำสั่งซื้อ</h3>
+            <p class="text-muted">เริ่มช้อปตอนนี้แล้วกลับมาดูประวัติได้ที่นี่</p>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-danger mt-2">เริ่มช้อปเลย</a>
+        </div>
+    }
 </div>
+
+<div class="modal fade" id="orderDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <h5 id="detailOrderNumber" class="mb-0">รายละเอียดคำสั่งซื้อ</h5>
+                    <small id="detailCreatedAt" class="text-muted"></small>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="timeline" id="detailTimeline"></div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6>ข้อมูลการชำระเงิน</h6>
+                            <p class="mb-1">วิธีชำระเงิน: <span id="detailPaymentMethod"></span></p>
+                            <p class="mb-0">ยอดชำระ: <strong id="detailFinalAmount"></strong></p>
+                            <p class="mb-0" id="detailCouponInfo"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-section">
+                            <h6>ข้อมูลผู้รับ</h6>
+                            <p class="mb-1" id="detailCustomer"></p>
+                            <p class="mb-1" id="detailContact"></p>
+                            <p class="mb-0" id="detailAddress"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="detail-section">
+                    <h6>รายการสินค้า</h6>
+                    <div id="detailItems" class="small"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        window.orderDetailApi = {
+            detailUrl: '@Url.Action("DetailsData", "Order")'
+        };
+    </script>
+    <script src="~/js/order-history.js" asp-append-version="true"></script>
+}
+
+

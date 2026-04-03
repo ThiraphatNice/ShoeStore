@@ -1,4 +1,5 @@
 @model ShoeStore.ViewModels.Cart.CartPageViewModel
+@using System.Globalization
 @{
     ViewData["Title"] = "Your Cart";
 }
@@ -279,6 +280,67 @@
             color: #fff;
         }
 
+        .checkout-modal .modal-content {
+            border-radius: 28px;
+            border: none;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.2);
+        }
+
+        .checkout-modal__body {
+            padding: 1.75rem;
+        }
+
+        .checkout-summary-box {
+            background: #fff5f5;
+            border-radius: 20px;
+            padding: 1rem 1.25rem;
+            margin-top: 1rem;
+        }
+
+        .checkout-summary-box .row-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+        }
+
+        .payment-panel {
+            display: none;
+        }
+
+        .payment-panel.is-active {
+            display: block;
+        }
+
+        .payment-panel input,
+        .payment-panel select {
+            border-radius: 14px;
+        }
+
+        .payment-tabs button {
+            border: none;
+            background: none;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            color: #999;
+        }
+
+        .payment-tabs button.active {
+            color: #b53636;
+            border-bottom: 3px solid #b53636;
+        }
+
+        .coupon-status {
+            min-height: 1.25rem;
+            font-size: 0.9rem;
+        }
+
+        .promptpay-panel img {
+            max-width: 220px;
+            display: block;
+            margin: 0 auto 1rem;
+        }
+
         @@media (max-width: 576px) {
             .cart-card__media {
                 width: 100%;
@@ -401,6 +463,131 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade checkout-modal" id="checkoutModal" tabindex="-1" aria-hidden="true" data-subtotal="@Model.TotalAmount.ToString("0.00", CultureInfo.InvariantCulture)">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div>
+                            <h5 class="modal-title">รายการสินค้าในตะกร้า</h5>
+                            <small class="text-muted">ยอดปัจจุบัน : @Model.TotalAmountDisplay</small>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="checkout-modal__body">
+                        <div class="mb-3">
+                            <strong>รายการสินค้า :</strong>
+                            <ul class="list-unstyled small text-muted mt-2 mb-0">
+                                @foreach (var item in Model.Items)
+                                {
+                                    <li>@item.ProductName x @item.Quantity - @($"{item.LineTotal:N0}.-")</li>
+                                }
+                            </ul>
+                        </div>
+                        <div class="payment-tabs mb-3">
+                            <button type="button" class="active" data-payment-tab="Credit Card">Credit Card</button>
+                            <button type="button" data-payment-tab="PromptPay">PromptPay</button>
+                        </div>
+                        <div id="creditPanel" class="payment-panel is-active">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">หมายเลขบัตรเครดิต</label>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="cardNumber"
+                                           maxlength="16"
+                                           inputmode="numeric"
+                                           pattern="[0-9]{16}"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                           placeholder="XXXX-XXXX-XXXX-XXXX">
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">ชื่อ-นามสกุล (ตามหน้าบัตร)</label>
+                                    <input type="text" class="form-control" id="cardHolder" placeholder="กรอกชื่อ-สกุลให้ตรงตามหน้าบัตร">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">วันหมดอายุบัตร - เดือน</label>
+                                    <select class="form-select" id="cardExpiryMonth">
+                                        <option value="">เลือกเดือน</option>
+                                        <option value="01">มกราคม</option>
+                                        <option value="02">กุมภาพันธ์</option>
+                                        <option value="03">มีนาคม</option>
+                                        <option value="04">เมษายน</option>
+                                        <option value="05">พฤษภาคม</option>
+                                        <option value="06">มิถุนายน</option>
+                                        <option value="07">กรกฎาคม</option>
+                                        <option value="08">สิงหาคม</option>
+                                        <option value="09">กันยายน</option>
+                                        <option value="10">ตุลาคม</option>
+                                        <option value="11">พฤศจิกายน</option>
+                                        <option value="12">ธันวาคม</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">ปี (YYYY)</label>
+                                    <input type="number" class="form-control" id="cardExpiryYear" min="2024" max="2040" placeholder="2026">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">รหัสหลังบัตร (CVV)</label>
+                                    <input type="password"
+                                           class="form-control"
+                                           id="cardCvv"
+                                           maxlength="3"
+                                           inputmode="numeric"
+                                           pattern="[0-9]{3}"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                           placeholder="XXX">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="promptpayPanel" class="payment-panel promptpay-panel">
+                            <img src="~/img/promtpay_thiraphat.jpg" alt="PromptPay QR" class="img-fluid shadow-sm rounded-4" />
+                            <p class="text-center mb-1 fw-semibold">สแกน QR เพื่อชำระผ่าน PromptPay</p>
+                            <p class="text-center text-muted small">เมื่อยืนยันแล้วถือว่าชำระเงินสำเร็จ</p>
+                        </div>
+                        <div class="mt-4">
+                            <label class="form-label">กรอกรหัสคูปอง (ไม่บังคับ)</label>
+                            <input type="text" class="form-control" id="couponInput" placeholder="กรอกรหัสคูปอง">
+                            <div class="coupon-status text-muted" id="couponStatusText"></div>
+                        </div>
+                        <div class="checkout-summary-box">
+                            <div class="row-line">
+                                <span>ราคาสินค้า</span>
+                                <strong id="checkoutSubtotal">@Model.TotalAmountDisplay</strong>
+                            </div>
+                            <div class="row-line">
+                                <span>ส่วนลดคูปอง</span>
+                                <strong id="checkoutDiscount">-0 บาท</strong>
+                            </div>
+                            <div class="row-line text-danger">
+                                <span>ราคาสุทธิ</span>
+                                <strong id="checkoutFinal">@Model.TotalAmountDisplay</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="button" class="btn btn-danger" id="checkoutSubmit">ยืนยันการชำระเงิน</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="paymentStatusModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center py-4">
+                        <div id="paymentStatusIcon" class="mb-3 fs-1"></div>
+                        <h5 id="paymentStatusTitle" class="mb-2"></h5>
+                        <p id="paymentStatusMessage" class="text-muted"></p>
+                        <div class="d-flex gap-2 justify-content-center mt-3">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ปิด</button>
+                            <button type="button" class="btn btn-danger" id="paymentStatusHistory" hidden>ไปหน้า History</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     }
     else
     {
@@ -416,8 +603,16 @@
     <script>
         window.cartApi = Object.assign(window.cartApi || {}, {
             updateItem: '@Url.Action("UpdateItem", "Cart")',
-            removeItem: '@Url.Action("RemoveItem", "Cart")'
+            removeItem: '@Url.Action("RemoveItem", "Cart")',
+            profileStatus: '@Url.Action("CheckProfileStatus", "Cart")',
+            validateCoupon: '@Url.Action("ValidateCoupon", "Checkout")',
+            submitPayment: '@Url.Action("SubmitPayment", "Checkout")',
+            orderHistory: '@Url.Action("Index", "Order")'
         });
+        window.checkoutDefaults = {
+            subtotal: parseFloat('@Model.TotalAmount.ToString("0.00", CultureInfo.InvariantCulture)'),
+            subtotalDisplay: '@Model.TotalAmountDisplay'
+        };
     </script>
     <script>
         (() => {
@@ -613,4 +808,5 @@
             });
         })();
     </script>
+    <script src="~/js/cart-checkout.js" asp-append-version="true"></script>
 }
