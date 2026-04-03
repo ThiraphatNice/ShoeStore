@@ -17,6 +17,7 @@ namespace ShoeStore.Controllers
     {
         private readonly ShoeStoreContext _context;
         private readonly StaffSalesService _staffSalesService;
+        private readonly StaffExpressService _staffExpressService;
 
         private static readonly Dictionary<string, StaffSectionOption> StaffSections = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -58,10 +59,11 @@ namespace ShoeStore.Controllers
             ActionName = nameof(ManageStaff)
         };
 
-        public StaffController(ShoeStoreContext context, StaffSalesService staffSalesService)
+        public StaffController(ShoeStoreContext context, StaffSalesService staffSalesService, StaffExpressService staffExpressService)
         {
             _context = context;
             _staffSalesService = staffSalesService;
+            _staffExpressService = staffExpressService;
         }
 
         public IActionResult Index()
@@ -183,14 +185,15 @@ namespace ShoeStore.Controllers
             return View(model);
         }
 
-        public IActionResult Express()
+        public async Task<IActionResult> Express()
         {
             if (!CanAccessSection("Staff Express"))
             {
                 return Forbid();
             }
 
-            return View();
+            var dashboard = await _staffExpressService.GetDashboardAsync();
+            return View(dashboard);
         }
 
         [HttpGet]
@@ -771,6 +774,50 @@ namespace ShoeStore.Controllers
         private static bool IsLimitedCategory(string categoryName)
         {
             return categoryName.Equals("Limited Edition", StringComparison.OrdinalIgnoreCase);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ExpressShipments()
+        {
+            if (!CanAccessSection("Staff Express"))
+            {
+                return Forbid();
+            }
+
+            var snapshot = await _staffExpressService.GetDashboardAsync();
+            return Json(new
+            {
+                success = true,
+                data = new
+                {
+                    pending = snapshot.ActionableShipments,
+                    all = snapshot.AllShipments,
+                    metrics = snapshot.Metrics
+                }
+            });
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UpdateShipmentStatus([FromBody] ExpressStatusUpdateRequest request)
+        {
+            if (!CanAccessSection("Staff Express"))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "ข้อมูลการอัปเดตไม่ถูกต้อง" });
+            }
+
+            var result = await _staffExpressService.UpdateStatusAsync(request.ShipmentId, request.NewStatus);
+            if (result == null)
+            {
+                return Json(new { success = false, message = "ไม่พบการจัดส่งที่เลือก" });
+            }
+
+            return Json(new { success = true, data = result });
         }
     }
 }

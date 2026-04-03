@@ -1,41 +1,420 @@
+@model ShoeStore.ViewModels.Staff.ExpressDashboardViewModel
+@using System.Text.Json
 @{
     ViewData["Title"] = "Express Logistics";
+    var serializerOptions = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+    var pendingJson = JsonSerializer.Serialize(Model.ActionableShipments, serializerOptions);
+    var allJson = JsonSerializer.Serialize(Model.AllShipments, serializerOptions);
+    var metricsJson = JsonSerializer.Serialize(Model.Metrics, serializerOptions);
+    var statusJson = JsonSerializer.Serialize(Model.StatusOptions.Select(s => new { value = s.Value ?? s.Text, text = s.Text }), serializerOptions);
 }
 
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-8">
-            <h1 class="fw-bold">Express Logistics</h1>
-            <p class="text-muted">รับผิดชอบการแพ็คสินค้าและประสานงานขนส่งให้ถึงมือลูกค้า</p>
+@section Styles {
+    <style>
+        .express-hero {
+            background: #fff;
+            border-radius: 28px;
+            padding: 36px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        .express-panel {
+            background: #fff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.08);
+            height: 100%;
+        }
+
+        .express-metric {
+            border-radius: 20px;
+            padding: 20px;
+            background: #fef6f4;
+            border: 1px solid #ffd4c7;
+        }
+
+        .express-metric h3 {
+            font-size: 2rem;
+            margin: 0;
+            color: #b53636;
+        }
+
+        .express-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .express-table thead {
+            background: #fdecec;
+        }
+
+        .express-table th {
+            font-weight: 600;
+            color: #7d2424;
+            border: none;
+        }
+
+        .express-table td {
+            vertical-align: middle;
+        }
+
+        .status-pill {
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-pill--warning {
+            background: #fff2d6;
+            color: #b27900;
+        }
+
+        .status-pill--info {
+            background: #dfefff;
+            color: #1c63a8;
+        }
+
+        .status-pill--success {
+            background: #e4f7df;
+            color: #217a38;
+        }
+
+        .status-pill--secondary {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .express-select {
+            min-width: 180px;
+            border-radius: 12px;
+        }
+
+        .express-toast {
+            position: fixed;
+            right: 24px;
+            bottom: 24px;
+            background: #111;
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 999px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s ease;
+            z-index: 2000;
+        }
+
+        .express-toast.is-visible {
+            opacity: 0.95;
+        }
+
+        @@media (max-width: 992px) {
+            .express-hero {
+                padding: 24px;
+            }
+        }
+    </style>
+}
+
+<div class="container py-5 express-page">
+    <div class="express-hero mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center">
+            <div class="pe-lg-4">
+                <p class="text-uppercase text-danger fw-semibold mb-2">Staff Express</p>
+                <h1 class="fw-bold mb-2">Express Logistics Command</h1>
+                <p class="text-muted mb-3">ติดตามสถานะการขนส่ง ปรับการจัดส่ง และดูสรุปรายการทั้งหมดได้จากศูนย์กลางเดียว</p>
+                <button class="btn btn-auth-primary" id="refreshExpressBtn">รีเฟรชข้อมูล</button>
+            </div>
+            <div class="row g-3 flex-grow-1 mt-4 mt-lg-0">
+                <div class="col-md-4">
+                    <div class="express-metric text-center">
+                        <p class="text-muted mb-1">กำลังเตรียม</p>
+                        <h3 id="metricPreparing">@Model.Metrics.PreparingCount</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="express-metric text-center">
+                        <p class="text-muted mb-1">กำลังส่ง</p>
+                        <h3 id="metricInTransit">@Model.Metrics.InTransitCount</h3>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="express-metric text-center">
+                        <p class="text-muted mb-1">ส่งเรียบร้อย</p>
+                        <h3 id="metricDelivered">@Model.Metrics.DeliveredCount</h3>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-    <div class="row g-4 mt-2">
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">คิวการแพ็ค</h5>
-                    <p class="card-text">จัดลำดับออเดอร์ที่ต้องแพ็คและตรวจสอบ SLA การส่งมอบ</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="express-panel h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-uppercase text-muted small mb-0">จัดการสถานะ</p>
+                        <h3 class="mb-0">การจัดส่งที่กำลังดำเนินงาน</h3>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table express-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>คำสั่งซื้อ</th>
+                                <th>ลูกค้า</th>
+                                <th>สินค้า</th>
+                                <th>ยอดสุทธิ</th>
+                                <th>สถานะ</th>
+                                <th>อัปเดตล่าสุด</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expressPendingBody"></tbody>
+                    </table>
+                    <div id="expressPendingEmpty" class="text-center text-muted py-4 d-none">
+                        ยังไม่มีการจัดส่งที่ต้องจัดการ
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">หมายเลขติดตาม</h5>
-                    <p class="card-text">บันทึก Tracking Number และสถานะการจัดส่งให้ลูกค้าติดตามได้</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+        <div class="col-lg-5">
+            <div class="express-panel h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-uppercase text-muted small mb-0">ประวัติการจัดส่ง</p>
+                        <h3 class="mb-0">รายการจัดส่งทั้งหมด</h3>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">รายงานปัญหา</h5>
-                    <p class="card-text">แจ้งปัญหาพัสดุและสรุปเคสที่ต้องติดตามพิเศษ</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+                <div class="table-responsive">
+                    <table class="table express-table align-middle">
+                        <thead>
+                            <tr>
+                                <th>คำสั่งซื้อ</th>
+                                <th>สถานะ</th>
+                                <th>ยอดรวม</th>
+                            </tr>
+                        </thead>
+                        <tbody id="expressAllBody"></tbody>
+                    </table>
+                    <div id="expressAllEmpty" class="text-center text-muted py-4 d-none">
+                        ยังไม่มีรายการจัดส่งในระบบ
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="express-toast" id="expressToast"></div>
+
+@section Scripts {
+    <script>
+        window.expressConfig = {
+            endpoints: {
+                snapshot: '@Url.Action("ExpressShipments", "Staff")',
+                updateStatus: '@Url.Action("UpdateShipmentStatus", "Staff")'
+            },
+            statuses: @Html.Raw(statusJson)
+        };
+        window.expressData = {
+            pending: @Html.Raw(pendingJson),
+            all: @Html.Raw(allJson),
+            metrics: @Html.Raw(metricsJson)
+        };
+    </script>
+    <script>
+        (() => {
+            const config = window.expressConfig;
+            const state = {
+                statuses: config.statuses ?? [],
+                pending: window.expressData.pending ?? [],
+                all: window.expressData.all ?? [],
+                metrics: window.expressData.metrics ?? { preparingCount: 0, inTransitCount: 0, deliveredCount: 0 },
+                loading: false
+            };
+
+            const elements = {
+                pendingBody: document.getElementById('expressPendingBody'),
+                pendingEmpty: document.getElementById('expressPendingEmpty'),
+                allBody: document.getElementById('expressAllBody'),
+                allEmpty: document.getElementById('expressAllEmpty'),
+                refreshBtn: document.getElementById('refreshExpressBtn'),
+                toast: document.getElementById('expressToast'),
+                metrics: {
+                    preparing: document.getElementById('metricPreparing'),
+                    inTransit: document.getElementById('metricInTransit'),
+                    delivered: document.getElementById('metricDelivered')
+                }
+            };
+
+            const showToast = (message, isError = false) => {
+                if (!elements.toast) return;
+                elements.toast.textContent = message;
+                elements.toast.style.background = isError ? '#b91c1c' : '#111';
+                elements.toast.classList.add('is-visible');
+                setTimeout(() => elements.toast.classList.remove('is-visible'), 2500);
+            };
+
+            const buildSelect = (shipmentId, currentStatusValue) => {
+                const select = document.createElement('select');
+                select.className = 'form-select express-select';
+                select.dataset.shipmentId = shipmentId;
+                state.statuses.forEach(option => {
+                    const opt = document.createElement('option');
+                    opt.value = option.value;
+                    opt.textContent = option.text;
+                    if (option.value === currentStatusValue) {
+                        opt.selected = true;
+                    }
+                    select.appendChild(opt);
+                });
+                select.addEventListener('change', async () => {
+                    select.disabled = true;
+                    try {
+                        await submitStatusChange(shipmentId, select.value);
+                        showToast('อัปเดตสถานะเรียบร้อย');
+                    } catch (error) {
+                        console.error(error);
+                        showToast(error.message || 'ไม่สามารถอัปเดตสถานะได้', true);
+                        select.value = currentStatusValue;
+                    } finally {
+                        select.disabled = false;
+                    }
+                });
+                return select;
+            };
+
+            const renderPending = () => {
+                if (!elements.pendingBody) return;
+                elements.pendingBody.innerHTML = '';
+                if (!state.pending.length) {
+                    elements.pendingEmpty?.classList.remove('d-none');
+                    return;
+                }
+                elements.pendingEmpty?.classList.add('d-none');
+
+                state.pending.forEach(row => {
+                    const tr = document.createElement('tr');
+                    const currentStatusValue = row.statusValue ?? '';
+                    tr.innerHTML = `
+                        <td>
+                            <div class="fw-semibold">#${row.orderId}</div>
+                            <small class="text-muted">Tracking: ${row.trackingNumber ?? '-'}</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">${row.customerName}</div>
+                            <small class="text-muted">${row.customerEmail ?? '-'}</small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">${row.itemCount} รายการ</div>
+                            <small class="text-muted">${row.itemsSummary ?? '-'}</small>
+                        </td>
+                        <td>${row.amountLabel ?? '-'}</td>
+                        <td>
+                            <div class="d-flex flex-column gap-2">
+                                <span class="status-pill status-pill--${row.statusBadgeTheme ?? 'secondary'}">
+                                    ${row.shippingStatus ?? '-'}
+                                </span>
+                            </div>
+                        </td>
+                        <td>${row.createdAtLabel ?? '-'}</td>
+                    `;
+                    const select = buildSelect(row.shipmentId, currentStatusValue);
+                    const statusCell = document.createElement('div');
+                    statusCell.className = 'd-flex flex-column gap-2';
+                    statusCell.appendChild(select);
+                    const pill = document.createElement('span');
+                    pill.className = `status-pill status-pill--${row.statusBadgeTheme ?? 'secondary'}`;
+                    pill.textContent = row.shippingStatus;
+                    statusCell.appendChild(pill);
+                    tr.children[4].innerHTML = '';
+                    tr.children[4].appendChild(statusCell);
+                    elements.pendingBody.appendChild(tr);
+                });
+            };
+
+            const renderAll = () => {
+                if (!elements.allBody) return;
+                elements.allBody.innerHTML = '';
+                if (!state.all.length) {
+                    elements.allEmpty?.classList.remove('d-none');
+                    return;
+                }
+                elements.allEmpty?.classList.add('d-none');
+
+                state.all.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="fw-semibold">#${row.orderId}</div>
+                            <small class="text-muted">${row.createdAtLabel ?? '-'}</small>
+                        </td>
+                        <td>
+                            <span class="status-pill status-pill--${row.statusBadgeTheme ?? 'secondary'}">
+                                ${row.shippingStatus ?? '-'}
+                            </span>
+                        </td>
+                        <td>${row.amountLabel ?? '-'}</td>
+                    `;
+                    elements.allBody.appendChild(tr);
+                });
+            };
+
+            const renderMetrics = () => {
+                elements.metrics.preparing.textContent = state.metrics.preparingCount ?? 0;
+                elements.metrics.inTransit.textContent = state.metrics.inTransitCount ?? 0;
+                elements.metrics.delivered.textContent = state.metrics.deliveredCount ?? 0;
+            };
+
+            const renderDashboard = () => {
+                renderPending();
+                renderAll();
+                renderMetrics();
+            };
+
+            const loadSnapshot = async () => {
+                try {
+                    const response = await fetch(config.endpoints.snapshot);
+                    const payload = await response.json();
+                    if (!payload.success) {
+                        throw new Error(payload.message || 'ไม่สามารถโหลดข้อมูลได้');
+                    }
+                    const data = payload.data ?? {};
+                    state.pending = data.pending ?? [];
+                    state.all = data.all ?? [];
+                    state.metrics = data.metrics ?? state.metrics;
+                    renderDashboard();
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message || 'เกิดข้อผิดพลาดในการโหลดข้อมูล', true);
+                }
+            };
+
+            const submitStatusChange = async (shipmentId, newStatus) => {
+                const response = await fetch(config.endpoints.updateStatus, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ shipmentId, newStatus })
+                });
+                const payload = await response.json();
+                if (!payload.success) {
+                    throw new Error(payload.message || 'อัปเดตสถานะล้มเหลว');
+                }
+                await loadSnapshot();
+            };
+
+            elements.refreshBtn?.addEventListener('click', loadSnapshot);
+
+            renderDashboard();
+        })();
+    </script>
+}
