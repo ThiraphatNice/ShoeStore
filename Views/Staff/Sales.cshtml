@@ -1,41 +1,903 @@
+﻿
+@model ShoeStore.ViewModels.Staff.SalesDashboardViewModel
+@using System.Text.Json
+@using Microsoft.AspNetCore.Mvc.Rendering
 @{
     ViewData["Title"] = "Sales & Promotions";
+    var monthOptions = Model.MonthOptions ?? Enumerable.Empty<SelectListItem>();
+    var yearOptions = Model.YearOptions ?? Enumerable.Empty<SelectListItem>();
+    var salesConfigJson = JsonSerializer.Serialize(new
+    {
+        endpoints = new
+        {
+            coupons = new
+            {
+                list = Url.Action("ListCoupons", "Staff"),
+                create = Url.Action("CreateCoupon", "Staff"),
+                update = Url.Action("UpdateCoupon", "Staff"),
+                delete = Url.Action("DeleteCoupon", "Staff")
+            },
+            summary = Url.Action("SalesSummary", "Staff"),
+            topProducts = Url.Action("TopProducts", "Staff")
+        },
+        defaults = new
+        {
+            scope = Model.DefaultScope,
+            year = Model.DefaultYear,
+            month = Model.DefaultMonth
+        }
+    });
 }
 
-<div class="container py-5">
-    <div class="row">
-        <div class="col-lg-8">
-            <h1 class="fw-bold">Sales & Promotions</h1>
-            <p class="text-muted">ออกแบบแคมเปญและคูปองใหม่ ๆ สำหรับรองเท้าแตะ/รองเท้าผ้าใบ</p>
+@section Styles {
+    <style>
+        .sales-hero {
+            background: linear-gradient(120deg, #fef4f4, #fff);
+            border-radius: 32px;
+            padding: 48px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+        }
+
+        .sales-filter-bar {
+            background: #fff;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        .sales-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+            height: 100%;
+        }
+
+        .sales-card__title {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #b53636;
+            font-weight: 600;
+        }
+
+        .sales-card__value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .sales-panel {
+            background: #fff;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 55px rgba(0, 0, 0, 0.07);
+        }
+
+        .sales-panel h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .sales-table thead {
+            background: #fdecec;
+        }
+
+        .sales-table thead th {
+            border: none;
+            color: #7d2424;
+        }
+
+        .sales-table tbody td {
+            vertical-align: middle;
+        }
+
+        .sales-pill {
+            border-radius: 999px;
+            padding: 3px 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .sales-pill--active {
+            background: #e9f9f2;
+            color: #0f8c5f;
+        }
+
+        .sales-pill--pending {
+            background: #fff5e5;
+            color: #b86b00;
+        }
+
+        .sales-pill--disabled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .sales-modal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .sales-modal.is-visible {
+            display: flex;
+        }
+
+        .sales-modal__backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+        }
+
+        .sales-modal__dialog {
+            position: relative;
+            z-index: 1;
+            background: #fff;
+            border-radius: 28px;
+            padding: 32px;
+            width: min(640px, 94vw);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.2);
+        }
+
+        .sales-modal .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            border: none;
+            background: transparent;
+            font-size: 2rem;
+            color: #b53636;
+        }
+
+        .sales-toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #111;
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 999px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 2500;
+        }
+
+        .sales-toast.is-visible {
+            opacity: 0.95;
+        }
+
+        .sales-empty {
+            padding: 24px;
+            text-align: center;
+            color: #94a3b8;
+        }
+
+        .btn-sell-chestnut {
+            background: #5a1712;
+            border-color: #4b120f;
+            color: #fff;
+        }
+
+        .btn-sell-chestnut:hover,
+        .btn-sell-chestnut:focus {
+            background: #3c0d0b;
+            border-color: #2f0909;
+            color: #fff;
+        }
+    </style>
+}
+
+<div class="sales-page container py-5">
+    <div class="sales-hero mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <p class="text-uppercase text-danger fw-semibold mb-2">Staff Sell</p>
+                <h1 class="fw-bold mb-2">Sales & Promotions Command Center</h1>
+                <p class="text-muted mb-0">ติดตามยอดขาย สร้าง/แก้ไขคูปอง และเจาะลึกสินค้าแรงในหน้าจอเดียว สรุปผลแบบเรียลไทม์สำหรับทีมการตลาด</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-4 mt-lg-0">
+                <button class="btn btn-auth-primary me-2" id="refreshSummaryBtn">รีเฟรชข้อมูล</button>
+                <button class="btn btn-outline-secondary" id="refreshCouponsBtn">รีเฟรชคูปอง</button>
+            </div>
         </div>
     </div>
-    <div class="row g-4 mt-2">
+
+    <div class="sales-filter-bar mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label text-muted text-uppercase small">โหมดสรุป</label>
+                <select class="form-select" id="salesScopeSelect">
+                    <option value="monthly" selected>มุมมองรายเดือน</option>
+                    <option value="yearly">มุมมองรายปี</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-muted text-uppercase small">ปี</label>
+                <select class="form-select" id="salesYearSelect">
+                    @foreach (var year in yearOptions)
+                    {
+                        <option value="@year.Value" selected="@(year.Selected)">@year.Text</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label text-muted text-uppercase small">เดือน</label>
+                <select class="form-select" id="salesMonthSelect">
+                    @foreach (var month in monthOptions)
+                    {
+                        <option value="@month.Value" selected="@(month.Selected)">@month.Text</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4 mb-4">
         <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">ตั้งค่าโปรโมชัน</h5>
-                    <p class="card-text">สร้างโปรสมาชิกใหม่, ซื้อ 2 คู่ลดเพิ่ม, หรือโปรโมชันลิมิเต็ด</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
-                </div>
+            <div class="sales-card">
+                <p class="sales-card__title mb-2">ยอดขายรวม</p>
+                <p class="sales-card__value" id="totalRevenueValue">-</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">คูปองและโค้ดส่วนลด</h5>
-                    <p class="card-text">จัดการโค้ดส่วนลดพร้อมกำหนดช่วงเวลาและเงื่อนไขใช้งาน</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
-                </div>
+            <div class="sales-card">
+                <p class="sales-card__title mb-2">จำนวนคำสั่งซื้อ</p>
+                <p class="sales-card__value" id="totalOrdersValue">-</p>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card shadow-sm h-100">
-                <div class="card-body">
-                    <h5 class="card-title">รายงานผล</h5>
-                    <p class="card-text">ดูสถิติยอดขายจากแต่ละแคมเปญเพื่อนำไปปรับปรุงโปรโมชันถัดไป</p>
-                    <span class="badge rounded-pill text-bg-warning">Coming soon</span>
+            <div class="sales-card">
+                <p class="sales-card__title mb-2">มูลค่าเฉลี่ย / ออเดอร์</p>
+                <p class="sales-card__value" id="averageOrderValue">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="sales-card">
+                <p class="sales-card__title mb-2">ออเดอร์ใช้คูปอง</p>
+                <p class="sales-card__value" id="couponUsageValue">-</p>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="sales-card">
+                <p class="sales-card__title mb-2">ส่วนลดรวม</p>
+                <p class="sales-card__value" id="discountTotalValue">-</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="sales-panel h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-uppercase text-muted small mb-0">ช่วงเวลาตามตัวกรอง</p>
+                        <h3 class="mb-0" id="salesRangeLabel">-</h3>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table sales-table">
+                        <thead>
+                            <tr>
+                                <th>วันที่</th>
+                                <th>จำนวนออเดอร์</th>
+                                <th>ยอดขาย (THB)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesSummaryTable"></tbody>
+                    </table>
+                    <div id="salesSummaryEmpty" class="sales-empty d-none">ยังไม่มีข้อมูลในช่วงนี้</div>
                 </div>
             </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="sales-panel h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="text-uppercase text-muted small mb-0">Top Products</p>
+                        <h3 class="mb-0">สินค้าขายดี</h3>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table sales-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>สินค้า</th>
+                                <th>จำนวน</th>
+                                <th>รายได้</th>
+                                <th>%</th>
+                            </tr>
+                        </thead>
+                        <tbody id="topProductsTable"></tbody>
+                    </table>
+                    <div id="topProductsEmpty" class="sales-empty d-none">ยังไม่มีข้อมูลสินค้าขายดี</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sales-panel mb-5">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <div>
+                <p class="text-uppercase text-muted small mb-0">Coupon Desk</p>
+                <h3 class="mb-0">จัดการคูปองการตลาด</h3>
+            </div>
+            <div class="d-flex gap-2 mt-3 mt-md-0">
+                <button class="btn btn-outline-secondary" id="addCouponBtn">เพิ่มคูปองใหม่</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table sales-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>ส่วนลด</th>
+                        <th>ขั้นต่ำ</th>
+                        <th>ช่วงเวลา</th>
+                        <th>สถานะ</th>
+                        <th>ใช้งาน</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="couponTable"></tbody>
+            </table>
+            <div id="couponEmptyRow" class="sales-empty">ยังไม่มีคูปองในระบบ</div>
         </div>
     </div>
 </div>
+<div class="sales-modal" id="couponModal">
+    <div class="sales-modal__backdrop" data-close></div>
+    <div class="sales-modal__dialog">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-3" id="couponModalTitle">เพิ่มคูปองใหม่</h4>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Coupon Code</label>
+                <input type="text" class="form-control" id="couponCodeInput" maxlength="40" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">ส่วนลด (%)</label>
+                <input type="number" class="form-control" id="discountPercentInput" min="0" max="100" step="0.1" inputmode="decimal" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">ยอดขั้นต่ำ (THB)</label>
+                <input type="number" class="form-control" id="minPurchaseInput" min="0" step="0.01" inputmode="decimal" />
+            </div>
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <label class="form-label">วันที่เริ่ม</label>
+                <input type="date" class="form-control" id="startDateInput" />
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">วันที่สิ้นสุด</label>
+                <input type="date" class="form-control" id="endDateInput" />
+            </div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-sell-chestnut flex-grow-1" id="saveCouponBtn">บันทึก</button>
+            <button class="btn btn-outline-secondary flex-grow-1" data-close>ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<div class="sales-modal" id="couponDeleteModal">
+    <div class="sales-modal__backdrop" data-close></div>
+    <div class="sales-modal__dialog">
+        <button class="modal-close" data-close aria-label="Close">&times;</button>
+        <h4 class="fw-bold mb-2">ยืนยันการลบ</h4>
+        <p id="couponDeleteSummary" class="text-muted"></p>
+        <div class="d-flex gap-2 mt-4">
+            <button class="btn btn-danger flex-grow-1" id="confirmDeleteCouponBtn">ลบคูปอง</button>
+            <button class="btn btn-outline-secondary flex-grow-1" data-close>ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<div class="sales-toast" id="salesToast"></div>
+@section Scripts {
+    <script>
+        window.salesConfig = @Html.Raw(salesConfigJson);
+    </script>
+    <script>
+        (() => {
+            const config = window.salesConfig;
+            if (!config) {
+                return;
+            }
+
+            const state = {
+                filters: {
+                    scope: config.defaults.scope || 'monthly',
+                    year: config.defaults.year,
+                    month: config.defaults.month
+                },
+                coupons: [],
+                editingCouponId: null
+            };
+
+            const elements = {
+                scopeSelect: document.getElementById('salesScopeSelect'),
+                yearSelect: document.getElementById('salesYearSelect'),
+                monthSelect: document.getElementById('salesMonthSelect'),
+                totalRevenue: document.getElementById('totalRevenueValue'),
+                totalOrders: document.getElementById('totalOrdersValue'),
+                avgOrder: document.getElementById('averageOrderValue'),
+                couponUsage: document.getElementById('couponUsageValue'),
+                discountTotal: document.getElementById('discountTotalValue'),
+                rangeLabel: document.getElementById('salesRangeLabel'),
+                summaryTableBody: document.getElementById('salesSummaryTable'),
+                summaryTableEmpty: document.getElementById('salesSummaryEmpty'),
+                topProductsBody: document.getElementById('topProductsTable'),
+                topProductsEmpty: document.getElementById('topProductsEmpty'),
+                couponBody: document.getElementById('couponTable'),
+                couponEmpty: document.getElementById('couponEmptyRow'),
+                couponModal: document.getElementById('couponModal'),
+                couponModalTitle: document.getElementById('couponModalTitle'),
+                deleteModal: document.getElementById('couponDeleteModal'),
+                deleteSummary: document.getElementById('couponDeleteSummary'),
+                toast: document.getElementById('salesToast'),
+                couponCode: document.getElementById('couponCodeInput'),
+                discountPercent: document.getElementById('discountPercentInput'),
+                minPurchase: document.getElementById('minPurchaseInput'),
+                startDate: document.getElementById('startDateInput'),
+                endDate: document.getElementById('endDateInput'),
+                refreshSummaryBtn: document.getElementById('refreshSummaryBtn'),
+                refreshCouponsBtn: document.getElementById('refreshCouponsBtn'),
+                addCouponBtn: document.getElementById('addCouponBtn'),
+                saveCouponBtn: document.getElementById('saveCouponBtn'),
+                confirmDeleteBtn: document.getElementById('confirmDeleteCouponBtn')
+            };
+
+            const openModal = (modal) => {
+                if (modal) {
+                    modal.classList.add('is-visible');
+                }
+            };
+
+            const closeModal = (modal) => {
+                if (modal) {
+                    modal.classList.remove('is-visible');
+                }
+            };
+
+            document.querySelectorAll('.sales-modal [data-close]').forEach((btn) => {
+                btn.addEventListener('click', () => closeModal(btn.closest('.sales-modal')));
+            });
+
+            const showToast = (message, isError = false) => {
+                if (!elements.toast) {
+                    return;
+                }
+                elements.toast.textContent = message;
+                elements.toast.style.background = isError ? '#b91c1c' : '#111';
+                elements.toast.classList.add('is-visible');
+                setTimeout(() => elements.toast.classList.remove('is-visible'), 3000);
+            };
+
+            const formatCurrency = (value) => new Intl.NumberFormat('th-TH', {
+                style: 'currency',
+                currency: 'THB',
+                minimumFractionDigits: 2
+            }).format(value ?? 0);
+
+            const formatPercent = (value) => ((value ?? 0).toFixed(1) + '%');
+
+            const formatDateLabel = (value) => {
+                if (!value) {
+                    return '-';
+                }
+                const date = new Date(value);
+                if (Number.isNaN(date.getTime())) {
+                    return '-';
+                }
+                return date.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
+            };
+
+            const formatDateRange = (start, end) => {
+                if (!start && !end) {
+                    return 'ไม่จำกัด';
+                }
+                const startText = start ? formatDateLabel(start) : 'วันนี้';
+                const endText = end ? formatDateLabel(end) : 'ไม่มีกำหนด';
+                return startText + ' - ' + endText;
+            };
+
+            const enforceNumericInput = (input, { allowDecimal = true, max = null } = {}) => {
+                if (!input) {
+                    return;
+                }
+                input.addEventListener('input', () => {
+                    let value = input.value.replace(/[^\d.]/g, '');
+                    if (!allowDecimal) {
+                        value = value.replace(/\./g, '');
+                    } else {
+                        const parts = value.split('.');
+                        if (parts.length > 1) {
+                            value = parts[0] + '.' + parts.slice(1).join('');
+                        }
+                    }
+                    if (value.startsWith('.')) {
+                        value = '0' + value;
+                    }
+                    if (max !== null && value !== '') {
+                        const num = Number(value);
+                        if (!Number.isNaN(num) && num > max) {
+                            value = max.toString();
+                        }
+                    }
+                    input.value = value;
+                });
+            };
+
+            const updateFiltersFromControls = () => {
+                state.filters.scope = elements.scopeSelect?.value || 'monthly';
+                state.filters.year = Number(elements.yearSelect?.value) || new Date().getFullYear();
+                const selectedMonth = Number(elements.monthSelect?.value) || (new Date().getMonth() + 1);
+                state.filters.month = selectedMonth;
+                if (elements.monthSelect) {
+                    elements.monthSelect.disabled = state.filters.scope === 'yearly';
+                }
+            };
+
+            const buildQueryString = () => {
+                const params = new URLSearchParams();
+                params.set('scope', state.filters.scope);
+                params.set('year', state.filters.year);
+                if (state.filters.scope === 'monthly') {
+                    params.set('month', state.filters.month);
+                }
+                return params.toString();
+            };
+
+            const fetchJson = async (url, options) => {
+                const response = await fetch(url, options);
+                return response.json();
+            };
+
+            const setSaveButtonStyle = () => {
+                if (!elements.saveCouponBtn) {
+                    return;
+                }
+                elements.saveCouponBtn.classList.remove('btn-auth-primary');
+                elements.saveCouponBtn.classList.add('btn-sell-chestnut');
+            };
+
+            const renderSummary = (data) => {
+                elements.totalRevenue.textContent = formatCurrency(data.cards?.totalRevenue ?? 0);
+                elements.totalOrders.textContent = (data.cards?.totalOrders ?? 0).toLocaleString('th-TH');
+                elements.avgOrder.textContent = formatCurrency(data.cards?.averageOrderValue ?? 0);
+                elements.couponUsage.textContent = (data.cards?.couponOrders ?? 0).toLocaleString('th-TH');
+                elements.discountTotal.textContent = formatCurrency(data.cards?.discountTotal ?? 0);
+                elements.rangeLabel.textContent = data.rangeLabel ?? '-';
+
+                const series = data.series ?? [];
+                if (!elements.summaryTableBody) {
+                    return;
+                }
+                elements.summaryTableBody.innerHTML = '';
+                if (!series.length) {
+                    elements.summaryTableEmpty.classList.remove('d-none');
+                    return;
+                }
+                elements.summaryTableEmpty.classList.add('d-none');
+                series.forEach((item) => {
+                    const row = document.createElement('tr');
+                    const orders = Number(item.orderCount ?? 0).toLocaleString('th-TH');
+                    row.innerHTML = `
+                        <td>${item.label ?? '-'}</td>
+                        <td>${orders}</td>
+                        <td>${formatCurrency(item.revenue ?? 0)}</td>
+                    `;
+                    elements.summaryTableBody.appendChild(row);
+                });
+            };
+
+            const renderTopProducts = (rows) => {
+                if (!elements.topProductsBody) {
+                    return;
+                }
+                elements.topProductsBody.innerHTML = '';
+                if (!rows || rows.length === 0) {
+                    elements.topProductsEmpty.classList.remove('d-none');
+                    return;
+                }
+
+                elements.topProductsEmpty.classList.add('d-none');
+                rows.forEach((item) => {
+                    const row = document.createElement('tr');
+                    let html = '';
+                    html += '<td>' + (item.rank ?? '-') + '</td>';
+                    html += '<td><div class="d-flex align-items-center gap-2">';
+                    if (item.imageUrl) {
+                        html += '<img src="' + item.imageUrl + '" alt="' + (item.productName ?? '') + '" width="40" height="40" class="rounded-3 object-fit-cover" />';
+                    }
+                    html += '<div><div class="fw-semibold">' + (item.productName ?? '-') + '</div>';
+                    html += '<small class="text-muted">' + (item.category ?? '-') + '</small></div></div></td>';
+                    const qty = Number(item.quantitySold ?? 0);
+                    html += '<td>' + qty.toLocaleString('th-TH') + '</td>';
+                    html += '<td>' + formatCurrency(item.revenue ?? 0) + '</td>';
+                    const share = Number(item.sharePercent ?? 0).toFixed(1);
+                    html += '<td>' + share + '%</td>';
+                    row.innerHTML = html;
+                    elements.topProductsBody.appendChild(row);
+                });
+            };
+
+            const renderCoupons = () => {
+                if (!elements.couponBody) {
+                    return;
+                }
+                elements.couponBody.innerHTML = '';
+                if (!state.coupons.length) {
+                    elements.couponEmpty.classList.remove('d-none');
+                    return;
+                }
+
+                elements.couponEmpty.classList.add('d-none');
+                state.coupons.forEach((coupon) => {
+                    const row = document.createElement('tr');
+                    row.dataset.couponId = coupon.id;
+
+                    let statusClass = 'sales-pill--disabled';
+                    if (coupon.isActive) {
+                        statusClass = 'sales-pill--active';
+                    } else if (coupon.statusLabel === 'ยังไม่เริ่ม') {
+                        statusClass = 'sales-pill--pending';
+                    }
+
+                    let html = '';
+                    html += '<td class="fw-bold">' + (coupon.couponCode ?? '') + '</td>';
+                    html += '<td>' + Number(coupon.discountPercent ?? 0).toFixed(1) + '%</td>';
+                    html += '<td>' + (coupon.minPurchase ? formatCurrency(coupon.minPurchase) : '-') + '</td>';
+                    html += '<td>' + formatDateRange(coupon.startDate, coupon.endDate) + '</td>';
+                    html += '<td><span class="sales-pill ' + statusClass + '">' + (coupon.statusLabel ?? '-') + '</span></td>';
+                    const usage = Number(coupon.usageCount ?? 0).toLocaleString('th-TH');
+                    html += '<td>' + usage + '</td>';
+                    html += '<td><div class="d-flex gap-2">';
+                    html += '<button class="btn btn-sm btn-sell-chestnut" data-action="edit">แก้ไข</button>';
+                    html += '<button class="btn btn-sm btn-outline-danger" data-action="delete">ลบ</button>';
+                    html += '</div></td>';
+
+                    row.innerHTML = html;
+                    elements.couponBody.appendChild(row);
+                });
+            };
+
+            const loadSummary = async () => {
+                try {
+                    const data = await fetchJson(config.endpoints.summary + '?' + buildQueryString());
+                    if (!data.success) {
+                        throw new Error(data.message || 'ไม่สามารถโหลดสรุปยอดได้');
+                    }
+                    renderSummary(data.data);
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message, true);
+                }
+            };
+
+            const loadTopProducts = async () => {
+                try {
+                    const data = await fetchJson(config.endpoints.topProducts + '?' + buildQueryString());
+                    if (!data.success) {
+                        throw new Error(data.message || 'ไม่สามารถโหลดสินค้าขายดีได้');
+                    }
+                    renderTopProducts(data.data);
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message, true);
+                }
+            };
+
+            const loadCoupons = async () => {
+                try {
+                    const data = await fetchJson(config.endpoints.coupons.list);
+                    if (!data.success) {
+                        throw new Error(data.message || 'ไม่สามารถโหลดคูปองได้');
+                    }
+                    state.coupons = data.data ?? [];
+                    renderCoupons();
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message, true);
+                }
+            };
+
+            const setCouponForm = (coupon) => {
+                elements.couponCode.value = coupon?.couponCode ?? '';
+                elements.discountPercent.value = coupon?.discountPercent ?? '';
+                elements.minPurchase.value = coupon?.minPurchase ?? '';
+                elements.startDate.value = coupon?.startDate ? coupon.startDate.substring(0, 10) : '';
+                elements.endDate.value = coupon?.endDate ? coupon.endDate.substring(0, 10) : '';
+            };
+
+            const readCouponForm = () => {
+                const code = elements.couponCode.value.trim();
+                let discount = Number(elements.discountPercent.value);
+                if (!code || Number.isNaN(discount)) {
+                    showToast('กรุณากรอกโค้ดและส่วนลดให้ครบ', true);
+                    return null;
+                }
+                discount = Math.min(Math.max(discount, 0), 100);
+                elements.discountPercent.value = discount.toString();
+
+                let minPurchase = elements.minPurchase.value === '' ? null : Number(elements.minPurchase.value);
+                if (minPurchase !== null) {
+                    if (Number.isNaN(minPurchase)) {
+                        showToast('ยอดขั้นต่ำต้องเป็นตัวเลขเท่านั้น', true);
+                        return null;
+                    }
+                    minPurchase = Math.max(minPurchase, 0);
+                    elements.minPurchase.value = minPurchase.toString();
+                }
+                const start = elements.startDate.value ? elements.startDate.value + 'T00:00:00Z' : null;
+                const end = elements.endDate.value ? elements.endDate.value + 'T00:00:00Z' : null;
+
+                return {
+                    couponCode: code,
+                    discountPercent: discount,
+                    minPurchase,
+                    startDate: start,
+                    endDate: end
+                };
+            };
+
+            const saveCoupon = async () => {
+                const payload = readCouponForm();
+                if (!payload) {
+                    return;
+                }
+
+                const isEdit = !!state.editingCouponId;
+                const endpoint = isEdit
+                    ? (config.endpoints.coupons.update + '/' + state.editingCouponId)
+                    : config.endpoints.coupons.create;
+
+                try {
+                    const data = await fetchJson(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!data.success) {
+                        throw new Error(data.message || 'บันทึกคูปองไม่สำเร็จ');
+                    }
+                    closeModal(elements.couponModal);
+                    showToast('บันทึกคูปองเรียบร้อย');
+                    state.editingCouponId = null;
+                    setSaveButtonStyle();
+                    await loadCoupons();
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message, true);
+                }
+            };
+
+            const deleteCoupon = async () => {
+                if (!state.editingCouponId) {
+                    return;
+                }
+
+                try {
+                    const data = await fetchJson(config.endpoints.coupons.delete, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ couponId: state.editingCouponId })
+                    });
+                    if (!data.success) {
+                        throw new Error(data.message || 'ไม่สามารถลบคูปองได้');
+                    }
+                    closeModal(elements.deleteModal);
+                    showToast('ลบคูปองแล้ว');
+                    state.editingCouponId = null;
+                    setSaveButtonStyle();
+                    await loadCoupons();
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message, true);
+                }
+            };
+
+            const handleCouponTable = (event) => {
+                const actionButton = event.target.closest('[data-action]');
+                if (!actionButton) {
+                    return;
+                }
+
+                const row = actionButton.closest('tr');
+                const couponId = Number(row?.dataset.couponId);
+                if (!couponId) {
+                    return;
+                }
+
+                const coupon = state.coupons.find((c) => c.id === couponId);
+                if (!coupon) {
+                    return;
+                }
+
+                if (actionButton.dataset.action === 'edit') {
+                    state.editingCouponId = couponId;
+                    elements.couponModalTitle.textContent = 'แก้ไขคูปอง ' + coupon.couponCode;
+                    setCouponForm(coupon);
+                    setSaveButtonStyle();
+                    openModal(elements.couponModal);
+                } else if (actionButton.dataset.action === 'delete') {
+                    state.editingCouponId = couponId;
+                    elements.deleteSummary.textContent = 'ยืนยันลบคูปอง ' + coupon.couponCode + ' ?';
+                    openModal(elements.deleteModal);
+                }
+            };
+
+            const initFilters = () => {
+                if (elements.scopeSelect) {
+                    elements.scopeSelect.value = state.filters.scope;
+                }
+                if (elements.yearSelect) {
+                    elements.yearSelect.value = state.filters.year;
+                }
+                if (elements.monthSelect) {
+                    elements.monthSelect.value = state.filters.month;
+                    elements.monthSelect.disabled = state.filters.scope === 'yearly';
+                }
+            };
+
+            const attachEvents = () => {
+                elements.scopeSelect?.addEventListener('change', () => {
+                    updateFiltersFromControls();
+                    loadSummary();
+                    loadTopProducts();
+                });
+                elements.yearSelect?.addEventListener('change', () => {
+                    updateFiltersFromControls();
+                    loadSummary();
+                    loadTopProducts();
+                });
+                elements.monthSelect?.addEventListener('change', () => {
+                    updateFiltersFromControls();
+                    loadSummary();
+                    loadTopProducts();
+                });
+
+                elements.refreshSummaryBtn?.addEventListener('click', () => {
+                    loadSummary();
+                    loadTopProducts();
+                });
+
+                elements.refreshCouponsBtn?.addEventListener('click', loadCoupons);
+
+                elements.addCouponBtn?.addEventListener('click', () => {
+                    state.editingCouponId = null;
+                    elements.couponModalTitle.textContent = 'เพิ่มคูปองใหม่';
+                    setCouponForm(null);
+                    setSaveButtonStyle();
+                    openModal(elements.couponModal);
+                });
+
+                elements.saveCouponBtn?.addEventListener('click', saveCoupon);
+                elements.confirmDeleteBtn?.addEventListener('click', deleteCoupon);
+                elements.couponBody?.addEventListener('click', handleCouponTable);
+            };
+
+            const init = () => {
+                enforceNumericInput(elements.discountPercent, { allowDecimal: true, max: 100 });
+                enforceNumericInput(elements.minPurchase, { allowDecimal: true, max: null });
+                initFilters();
+                setSaveButtonStyle();
+                attachEvents();
+                updateFiltersFromControls();
+                loadSummary();
+                loadTopProducts();
+                loadCoupons();
+            };
+
+            init();
+        })();
+    </script>
+}

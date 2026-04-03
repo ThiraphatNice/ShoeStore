@@ -3,9 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ShoeStore.Models.db;
+using ShoeStore.Services;
 using ShoeStore.ViewModels;
 using ShoeStore.ViewModels.Staff;
 using ShoeStore.ViewModels.Stock;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace ShoeStore.Controllers
@@ -14,6 +16,7 @@ namespace ShoeStore.Controllers
     public class StaffController : Controller
     {
         private readonly ShoeStoreContext _context;
+        private readonly StaffSalesService _staffSalesService;
 
         private static readonly Dictionary<string, StaffSectionOption> StaffSections = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -55,9 +58,10 @@ namespace ShoeStore.Controllers
             ActionName = nameof(ManageStaff)
         };
 
-        public StaffController(ShoeStoreContext context)
+        public StaffController(ShoeStoreContext context, StaffSalesService staffSalesService)
         {
             _context = context;
+            _staffSalesService = staffSalesService;
         }
 
         public IActionResult Index()
@@ -145,7 +149,38 @@ namespace ShoeStore.Controllers
                 return Forbid();
             }
 
-            return View();
+            var now = DateTime.UtcNow;
+            var culture = CultureInfo.GetCultureInfo("th-TH");
+
+            var yearOptions = Enumerable.Range(0, 3)
+                .Select(offset => now.Year - offset)
+                .Select(year => new SelectListItem
+                {
+                    Value = year.ToString(),
+                    Text = year.ToString(),
+                    Selected = year == now.Year
+                })
+                .ToList();
+
+            var monthOptions = Enumerable.Range(1, 12)
+                .Select(month => new SelectListItem
+                {
+                    Value = month.ToString(),
+                    Text = culture.DateTimeFormat.GetMonthName(month),
+                    Selected = month == now.Month
+                })
+                .ToList();
+
+            var model = new SalesDashboardViewModel
+            {
+                YearOptions = yearOptions,
+                MonthOptions = monthOptions,
+                DefaultScope = "monthly",
+                DefaultYear = now.Year,
+                DefaultMonth = now.Month
+            };
+
+            return View(model);
         }
 
         public IActionResult Express()
@@ -156,6 +191,129 @@ namespace ShoeStore.Controllers
             }
 
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ListCoupons()
+        {
+            if (!CanAccessSection("Staff Sell"))
+            {
+                return Forbid();
+            }
+
+            var data = await _staffSalesService.GetCouponsAsync();
+            return Json(new { success = true, data });
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> CreateCoupon([FromBody] CouponUpsertRequest request)
+        {
+            if (!CanAccessSection("Staff Sell"))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "กรุณากรอกข้อมูลคูปองให้ครบถ้วน" });
+            }
+
+            try
+            {
+                var data = await _staffSalesService.CreateCouponAsync(request);
+                return Json(new { success = true, data });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> UpdateCoupon(int id, [FromBody] CouponUpsertRequest request)
+        {
+            if (!CanAccessSection("Staff Sell"))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "กรุณากรอกข้อมูลคูปองให้ครบถ้วน" });
+            }
+
+            try
+            {
+                var data = await _staffSalesService.UpdateCouponAsync(id, request);
+                return Json(new { success = true, data });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> DeleteCoupon([FromBody] CouponDeleteRequest request)
+        {
+            if (!CanAccessSection("Staff Sell"))
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "เลือกคูปองที่ต้องการลบก่อน" });
+            }
+
+            try
+            {
+                await _staffSalesService.DeleteCouponAsync(request.CouponId);
+                return Json(new { success = true });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> SalesSummary([FromQuery] SalesSummaryQuery query)
+        {
+            if (!CanAccessSection("Staff Sell"))
+            {
+                return Forbid();
+            }
+
+            query ??= new SalesSummaryQuery();
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "พารามิเตอร์สรุปยอดขายไม่ถูกต้อง" });
+            }
+
+            var data = await _staffSalesService.GetSalesSummaryAsync(query);
+            return Json(new { success = true, data });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TopProducts([FromQuery] SalesSummaryQuery query, [FromQuery] int limit = 5)
+        {
+            if (!CanAccessSection("Staff Sell"))
+            {
+                return Forbid();
+            }
+
+            query ??= new SalesSummaryQuery();
+            if (!ModelState.IsValid)
+            {
+                return Json(new { success = false, message = "พารามิเตอร์สรุปยอดขายไม่ถูกต้อง" });
+            }
+
+            var data = await _staffSalesService.GetTopProductsAsync(query, limit);
+            return Json(new { success = true, data });
         }
 
         [Authorize(Roles = "Admin")]

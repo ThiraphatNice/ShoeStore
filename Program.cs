@@ -14,6 +14,7 @@ builder.Services.AddDbContext<ShoeStoreContext>(options =>
     ));
 
 builder.Services.AddScoped<CheckoutService>();
+builder.Services.AddScoped<StaffSalesService>();
 
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
