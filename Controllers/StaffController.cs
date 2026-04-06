@@ -306,21 +306,21 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                TempData["StaffError"] = "เนเธเธฃเธ”เธเธฃเธญเธเธเนเธญเธกเธนเธฅเนเธซเนเธเธฃเธเธ–เนเธงเธ";
+                TempData["StaffError"] = "กรุณากรอกข้อมูลให้ครบถ้วน";
                 return RedirectToAction(nameof(ManageStaff));
             }
 
             var role = await _context.Roles.FirstOrDefaultAsync(r => r.Id == model.RoleId);
             if (role == null || role.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase))
             {
-                TempData["StaffError"] = "เนเธกเนเธชเธฒเธกเธฒเธฃเธ–เน€เธเธดเนเธกเธเธฑเธเธเธตเธ”เนเธงเธขเธชเธดเธ—เธเธดเนเธ—เธตเนเน€เธฅเธทเธญเธเนเธ”เน";
+                TempData["StaffError"] = "กรุณากรอกข้อมูลให้ครบถ้วน";
                 return RedirectToAction(nameof(ManageStaff));
             }
 
             var emailExists = await _context.Users.AnyAsync(u => u.Email == model.Email);
             if (emailExists)
             {
-                TempData["StaffError"] = "เธญเธตเน€เธกเธฅเธเธตเนเธ–เธนเธเนเธเนเธเธฒเธเธญเธขเธนเนเนเธฅเนเธง";
+                TempData["StaffError"] = "กรุณากรอกข้อมูลให้ครบถ้วน";
                 return RedirectToAction(nameof(ManageStaff));
             }
 
@@ -335,7 +335,7 @@ namespace ShoeStore.Controllers
             _context.Users.Add(newUser);
             await _context.SaveChangesAsync();
 
-            TempData["StaffStatus"] = $"เธชเธฃเนเธฒเธเธเธฑเธเธเธต {role.RoleName} เธชเธณเธซเธฃเธฑเธ {model.FullName} เธชเธณเน€เธฃเนเธ";
+            TempData["StaffStatus"] = $"สร้าง {role.RoleName} สำหรับ {model.FullName} เรียบร้อยแล้ว";
             return RedirectToAction(nameof(ManageStaff));
         }
 
@@ -404,19 +404,19 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
+                return Json(new { success = false, message = "ข้อมูลสินค้าไม่ถูกต้อง" });
             }
 
             var product = await _context.Products.FirstOrDefaultAsync(p => p.Id == request.ProductId);
             if (product == null)
             {
-                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒ" });
+                return Json(new { success = false, message = "ไม่พบข้อมูลสินค้าที่ค้นหา" });
             }
 
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
             if (category == null)
             {
-                return Json(new { success = false, message = "เธซเธกเธงเธ”เธซเธกเธนเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
+                return Json(new { success = false, message = "ไม่พบหมวดหมู่ที่เลือก" });
             }
 
             product.ProductName = request.Name;
@@ -438,7 +438,7 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
             }
 
             var variant = await _context.ProductVariants
@@ -448,7 +448,7 @@ namespace ShoeStore.Controllers
 
             if (variant == null)
             {
-                return Json(new { success = false, message = "เนเธกเนเธเธเธฃเธฒเธขเธเธฒเธฃเนเธเธชเน/เธชเธตเธเธตเน" });
+                return Json(new { success = false, message = "ไม่พบตัวเลือกสินค้าที่เลือก" });
             }
 
             variant.StockQuantity = request.Quantity;
@@ -476,7 +476,7 @@ namespace ShoeStore.Controllers
 
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
             }
 
             var exists = await _context.ProductVariants.AnyAsync(v =>
@@ -486,7 +486,7 @@ namespace ShoeStore.Controllers
 
             if (exists)
             {
-                return Json(new { success = false, message = "เธฃเธฒเธขเธเธฒเธฃเนเธเธชเน/เธชเธตเธเธตเนเธกเธตเธญเธขเธนเนเนเธฅเนเธง" });
+                return Json(new { success = false, message = "ตัวเลือกสินค้าซ้ำกัน" });
             }
 
             var variant = new ProductVariant
@@ -566,13 +566,13 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
             }
 
             var category = await _context.Categories.FirstOrDefaultAsync(c => c.Id == request.CategoryId);
             if (category == null)
             {
-                return Json(new { success = false, message = "เธซเธกเธงเธ”เธซเธกเธนเนเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
+                return Json(new { success = false, message = "ไม่พบหมวดหมู่ที่เลือก" });
             }
 
             var product = new Product

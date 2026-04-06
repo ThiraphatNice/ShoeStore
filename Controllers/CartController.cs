@@ -65,7 +65,7 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเธชเธดเธเธเนเธฒเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
             }
 
             if (IsInternalPurchaseRestricted())
@@ -85,7 +85,7 @@ namespace ShoeStore.Controllers
 
             if (variant == null)
             {
-                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒเธ—เธตเนเน€เธฅเธทเธญเธ" });
+                return Json(new { success = false, message = "ไม่พบสินค้าที่เลือก" });
             }
 
             var available = variant.StockQuantity ?? 0;
@@ -95,8 +95,8 @@ namespace ShoeStore.Controllers
                 {
                     success = false,
                     message = available <= 0
-                        ? "เธชเธดเธเธเนเธฒเธซเธกเธ”เธชเธ•เนเธญเธ"
-                        : $"เธเธเน€เธซเธฅเธทเธญ {available} เธเธดเนเธ"
+                        ? "สินค้าหมดแล้ว"
+                        : $"เหลือสินค้า {available} ชิ้น"
                 });
             }
 
@@ -144,7 +144,7 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
             }
 
             if (IsInternalPurchaseRestricted())
@@ -165,7 +165,7 @@ namespace ShoeStore.Controllers
 
             if (cartItem == null)
             {
-                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒเนเธเธ•เธฐเธเธฃเนเธฒ" });
+                return Json(new { success = false, message = "ไม่พบรายการในตะกร้า" });
             }
 
             var desiredQuantity = Math.Max(1, request.Quantity);
@@ -196,8 +196,8 @@ namespace ShoeStore.Controllers
                 {
                     success = false,
                     message = available <= 0
-                        ? "เธชเธดเธเธเนเธฒเธซเธกเธ”เธชเธ•เนเธญเธ"
-                        : $"เน€เธเธดเนเธกเนเธ”เนเธชเธนเธเธชเธธเธ”เธญเธตเธ {available} เธเธดเนเธ"
+                        ? "สินค้าหมดแล้ว"
+                        : $"เหลือสินค้า {available} ชิ้น"
                 });
             }
 
@@ -230,7 +230,7 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+                return Json(new { success = false, message = "ข้อมูลไม่ถูกต้อง" });
             }
 
             if (IsInternalPurchaseRestricted())
@@ -250,7 +250,7 @@ namespace ShoeStore.Controllers
 
             if (cartItem == null)
             {
-                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒเนเธเธ•เธฐเธเธฃเนเธฒ" });
+                return Json(new { success = false, message = "ไม่พบรายการในตะกร้า" });
             }
 
             var variant = cartItem.ProductVariant;
@@ -383,19 +383,19 @@ namespace ShoeStore.Controllers
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(user.Fullname))
             {
-                missing.Add("เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅ");
+                missing.Add("ชื่อ-นามสกุล");
             }
             if (string.IsNullOrWhiteSpace(user.Email))
             {
-                missing.Add("เธญเธตเน€เธกเธฅ");
+                missing.Add("อีเมล");
             }
             if (string.IsNullOrWhiteSpace(user.Phone))
             {
-                missing.Add("เน€เธเธญเธฃเนเนเธ—เธฃ");
+                missing.Add("เบอร์โทรศัพท์");
             }
             if (string.IsNullOrWhiteSpace(user.Address))
             {
-                missing.Add("เธ—เธตเนเธญเธขเธนเน");
+                missing.Add("ที่อยู่");
             }
 
             return new ProfileStatusViewModel
