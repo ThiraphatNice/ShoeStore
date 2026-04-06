@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using ShoeStore.Services;
 
 namespace ShoeStore.Controllers
 {
@@ -8,17 +9,23 @@ namespace ShoeStore.Controllers
     {
         public IActionResult Index()
         {
-            return View();
+            var model = StaffNavigationService.BuildDashboard(User);
+            return View("~/Views/Staff/Index.cshtml", model);
         }
 
         public IActionResult ManageUsers()
         {
-            return View();
+            return RedirectToAction(nameof(StaffController.ManageUsers), "Staff");
         }
 
         public IActionResult ManageProducts()
         {
-            return View();
+            return RedirectToAction(nameof(StaffController.Stock), "Staff");
+        }
+
+        public IActionResult ManageStaff()
+        {
+            return RedirectToAction(nameof(StaffController.ManageStaff), "Staff");
         }
     }
 }

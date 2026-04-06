@@ -19,46 +19,6 @@ namespace ShoeStore.Controllers
         private readonly StaffSalesService _staffSalesService;
         private readonly StaffExpressService _staffExpressService;
 
-        private static readonly Dictionary<string, StaffSectionOption> StaffSections = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["Staff Stock"] = new StaffSectionOption
-            {
-                RoleName = "Staff Stock",
-                DisplayName = "Stock Control",
-                Description = "เธ•เธฃเธงเธเน€เธเนเธเธเธณเธเธงเธเธชเธดเธเธเนเธฒ เธฃเธฑเธเธชเธดเธเธเนเธฒเน€เธเนเธฒ เนเธฅเธฐเธญเธฑเธเน€เธ”เธ•เธเธฅเธฑเธเนเธเธ real-time",
-                ActionName = nameof(Stock)
-            },
-            ["Staff Manag"] = new StaffSectionOption
-            {
-                RoleName = "Staff Manag",
-                DisplayName = "Operations Hub",
-                Description = "เธ”เธนเนเธฅเธเน€เธเธทเธเธเธเธญเธฅเธฐเธกเธนเธขเธเนเธเธขเธญเธเนเธฅเธฐเธเนเธญเธเธเนเธฒเธเธฑเธเธเธต",
-                ActionName = nameof(ManageUsers)
-            },
-            ["Staff Sell"] = new StaffSectionOption
-            {
-                RoleName = "Staff Sell",
-                DisplayName = "Sales & Promotions",
-                Description = "เธงเธฒเธเนเธเธเนเธเธฃเนเธกเธเธฑเธเนเธฅเธฐเนเธเธกเน€เธเธเธเธฒเธฃเธเธฒเธข",
-                ActionName = nameof(Sales)
-            },
-            ["Staff Express"] = new StaffSectionOption
-            {
-                RoleName = "Staff Express",
-                DisplayName = "Express Logistics",
-                Description = "เน€เธ•เธฃเธตเธขเธกเนเธเนเธเธชเธดเธเธเนเธฒเนเธฅเธฐเธ”เธนเนเธฅเธเธฒเธฃเธเธฑเธ”เธชเนเธ",
-                ActionName = nameof(Express)
-            }
-        };
-
-        private static readonly StaffSectionOption AdminSection = new StaffSectionOption
-        {
-            RoleName = "Admin",
-            DisplayName = "Admin Control Center",
-            Description = "เธชเธฃเนเธฒเธ/เธเธฑเธ”เธเธฒเธฃเธเธฑเธเธเธตเธเธเธฑเธเธเธฒเธเนเธฅเธฐเธเธนเนเนเธเนเธเธฒเธ",
-            ActionName = nameof(ManageStaff)
-        };
-
         public StaffController(ShoeStoreContext context, StaffSalesService staffSalesService, StaffExpressService staffExpressService)
         {
             _context = context;
@@ -68,17 +28,7 @@ namespace ShoeStore.Controllers
 
         public IActionResult Index()
         {
-            var model = new StaffDashboardViewModel
-            {
-                IsAdmin = User.IsInRole("Admin"),
-                Sections = GetSectionsForCurrentUser().ToList()
-            };
-
-            if (model.IsAdmin)
-            {
-                model.Sections.Add(AdminSection);
-            }
-
+            var model = StaffNavigationService.BuildDashboard(User);
             return View(model);
         }
 
@@ -715,28 +665,6 @@ namespace ShoeStore.Controllers
             _context.Users.Remove(target);
             await _context.SaveChangesAsync();
             return Json(new { success = true });
-        }
-
-        private IEnumerable<StaffSectionOption> GetSectionsForCurrentUser()
-        {
-            if (User.IsInRole("Admin"))
-            {
-                return StaffSections.Values;
-            }
-
-            var roleNames = User.Claims
-                .Where(c => c.Type == ClaimTypes.Role && c.Value.StartsWith("Staff", StringComparison.OrdinalIgnoreCase))
-                .Select(c => c.Value)
-                .Distinct(StringComparer.OrdinalIgnoreCase);
-
-            if (User.IsInRole("Staff"))
-            {
-                return StaffSections.Values;
-            }
-
-            return roleNames
-                .Where(StaffSections.ContainsKey)
-                .Select(role => StaffSections[role]);
         }
 
         private async Task<IEnumerable<SelectListItem>> GetRoleOptionsAsync()
