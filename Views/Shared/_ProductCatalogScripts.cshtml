@@ -1,7 +1,10 @@
-<script>
+﻿<script>
     (() => {
         const body = document.body;
         const modal = document.getElementById('productModal');
+        const cartRestrictions = window.cartRestrictions || {};
+        const isCartDisabled = Boolean(cartRestrictions.isDisabled);
+        const cartRestrictionMessage = cartRestrictions.message || 'บัญชีพนักงานและแอดมินไม่สามารถซื้อสินค้าได้';
 
         const initGridControls = () => {
             const arrowButtons = document.querySelectorAll('.grid-arrow');
@@ -167,7 +170,7 @@
             if (combined.length === 0) {
                 const option = document.createElement('option');
                 option.value = '';
-                option.textContent = '������';
+                option.textContent = 'สีเดียว';
                 select.appendChild(option);
                 select.disabled = true;
                 return [];
@@ -276,31 +279,42 @@
             }
 
             if (modalElements.addButton) {
-                modalElements.addButton.disabled = !variant || (typeof variant.stockQuantity === 'number' && variant.stockQuantity <= 0);
+                const variantUnavailable = !variant || (typeof variant.stockQuantity === 'number' && variant.stockQuantity <= 0);
+                const shouldDisable = isCartDisabled || variantUnavailable;
+                modalElements.addButton.disabled = shouldDisable;
+                modalElements.addButton.classList.toggle('is-disabled-cart', isCartDisabled);
+                modalElements.addButton.textContent = isCartDisabled
+                    ? 'บัญชีพนักงานและแอดมินไม่สามารถซื้อสินค้าได้'
+                    : 'เพิ่มสินค้าในตะกร้า';
+                modalElements.addButton.setAttribute('aria-disabled', shouldDisable.toString());
             }
         };
 
         const handleAddToCart = async () => {
+            if (isCartDisabled) {
+                showToast(cartRestrictionMessage, 'warning');
+                return;
+            }
             if (!window.cartApi?.addItem) {
-                showToast('�������ö�����Թ���ŧ�С�����㹢�й��', 'warning');
+                showToast('ไม่สามารถเพิ่มสินค้าลงตะกร้าได้ในขณะนี้', 'warning');
                 return;
             }
 
             const variant = getActiveVariant();
             if (!variant?.variantId) {
-                showToast('��س����͡����������������˹���', 'warning');
+                showToast('กรุณาเลือกสีและไซส์ที่พร้อมจำหน่าย', 'warning');
                 return;
             }
 
             const available = variant.stockQuantity ?? 0;
             if (available <= 0) {
-                showToast('�Թ������ʵ�͡����', 'warning');
+                showToast('สินค้าหมดสต็อกแล้ว', 'warning');
                 return;
             }
 
             const quantity = Number(modalElements.quantity.value) || 1;
             if (quantity > available) {
-                showToast(`���͡���٧�ش ${available} �������Ѻ������͡���`, 'warning');
+                showToast(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`, 'warning');
                 modalElements.quantity.value = String(available);
                 return;
             }
@@ -316,17 +330,17 @@
                 });
                 const result = await response.json();
                 if (!result.success) {
-                    showToast(result.message || '�������ö�����Թ�����', 'warning');
+                    showToast(result.message || 'ไม่สามารถเพิ่มสินค้าได้', 'warning');
                     return;
                 }
 
                 variant.stockQuantity = result.item?.variantStock ?? available - quantity;
                 modalElements.quantity.value = '1';
                 updateVariantDetails();
-                showToast('�����Թ���㹵С������º��������', 'success');
+                showToast('เพิ่มสินค้าในตะกร้าเรียบร้อยแล้ว', 'success');
             } catch (error) {
                 console.error(error);
-                showToast('�Դ��ͼԴ��Ҵ ��س��ͧ�ա����', 'warning');
+                showToast('เกิดข้อผิดพลาด กรุณาลองอีกครั้ง', 'warning');
             }
         };
 
@@ -413,7 +427,7 @@
 
             if (direction === 'plus') {
                 if (Number.isFinite(available) && available <= current) {
-                    showToast(`���͡���٧�ش ${available} �������Ѻ������͡���`, 'warning');
+                    showToast(`เลือกได้สูงสุด ${available} ชิ้นสำหรับตัวเลือกนี้`, 'warning');
                     return;
                 }
                 modalElements.quantity.value = String(current + 1);
@@ -433,3 +447,7 @@
         initGridControls();
     })();
 </script>
+
+
+
+

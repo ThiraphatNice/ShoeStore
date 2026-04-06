@@ -17,9 +17,9 @@ namespace ShoeStore.Services
                 Description = "เธ•เธฃเธงเธเน€เธเนเธเธเธณเธเธงเธเธชเธดเธเธเนเธฒ เธฃเธฑเธเธชเธดเธเธเนเธฒเน€เธเนเธฒ เนเธฅเธฐเธญเธฑเธเน€เธ”เธ•เธเธฅเธฑเธเนเธเธ real-time",
                 ActionName = nameof(StaffController.Stock)
             },
-            ["Staff Manag"] = new StaffSectionOption
+            ["Staff Manager"] = new StaffSectionOption
             {
-                RoleName = "Staff Manag",
+                RoleName = "Staff Manager",
                 DisplayName = "Operations Hub",
                 Description = "เธ”เธนเนเธฅเธเน€เธเธทเธเธ?เธเธญเธฅเธฐเธกเธนเธขเธเนเธเธขเธญเธเนเธฅเธฐเธเนเธญเธเธเนเธฒเธเธฑเธเธเธต",
                 ActionName = nameof(StaffController.ManageUsers)
@@ -40,6 +40,18 @@ namespace ShoeStore.Services
             }
         };
 
+        private static readonly Dictionary<string, string[]> RoleAliasMap = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Staff Stock"] = new[] { "Staff Stock" },
+            ["Staff Manager"] = new[] { "Staff Manager", "Staff Manag", "Staff Manage" },
+            ["Staff Sell"] = new[] { "Staff Sell" },
+            ["Staff Express"] = new[] { "Staff Express" }
+        };
+
+        private static readonly Dictionary<string, string> AliasToCanonical = RoleAliasMap
+            .SelectMany(kvp => kvp.Value.Select(alias => new KeyValuePair<string, string>(alias, kvp.Key)))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value, StringComparer.OrdinalIgnoreCase);
+
         public static StaffDashboardViewModel BuildDashboard(ClaimsPrincipal user)
         {
             var viewModel = new StaffDashboardViewModel
@@ -53,19 +65,40 @@ namespace ShoeStore.Services
 
         public static IEnumerable<StaffSectionOption> GetSectionsFor(ClaimsPrincipal user)
         {
-            if (user.IsInRole("Admin") || user.IsInRole("Staff"))
+            if (user.IsInRole("Admin"))
             {
                 return StaffSections.Values;
             }
 
             var roleNames = user.Claims
                 .Where(c => c.Type == ClaimTypes.Role && c.Value.StartsWith("Staff", StringComparison.OrdinalIgnoreCase))
-                .Select(c => c.Value)
+                .Select(c => NormalizeRoleName(c.Value))
+                .Where(StaffSections.ContainsKey)
                 .Distinct(StringComparer.OrdinalIgnoreCase);
 
             return roleNames
-                .Where(StaffSections.ContainsKey)
                 .Select(role => StaffSections[role]);
+        }
+
+        public static IEnumerable<string> GetRoleNamesForAccess(string roleName)
+        {
+            var canonical = NormalizeRoleName(roleName);
+            if (RoleAliasMap.TryGetValue(canonical, out var aliases))
+            {
+                return aliases;
+            }
+
+            return new[] { canonical };
+        }
+
+        private static string NormalizeRoleName(string roleName)
+        {
+            if (AliasToCanonical.TryGetValue(roleName, out var canonical))
+            {
+                return canonical;
+            }
+
+            return roleName;
         }
     }
 }

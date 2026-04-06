@@ -39,6 +39,11 @@ namespace ShoeStore.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> SubmitPayment([FromBody] CheckoutRequest request)
         {
+            if (IsInternalPurchaseRestricted())
+            {
+                return Json(new { success = false, message = "บัญชีแอดมินและพนักงานไม่สามารถทำรายการสั่งซื้อได้" });
+            }
+
             var userId = GetCurrentUserId();
             if (userId == null)
             {
@@ -146,6 +151,23 @@ namespace ShoeStore.Controllers
                 IsComplete = missing.Count == 0,
                 MissingFields = missing
             };
+        }
+
+        private bool IsInternalPurchaseRestricted()
+        {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return false;
+            }
+
+            if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+            {
+                return true;
+            }
+
+            return User.Claims.Any(c =>
+                c.Type == ClaimTypes.Role &&
+                c.Value.StartsWith("Staff", StringComparison.OrdinalIgnoreCase));
         }
     }
 }

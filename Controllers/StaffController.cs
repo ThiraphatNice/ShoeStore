@@ -15,6 +15,7 @@ namespace ShoeStore.Controllers
     [Authorize(Roles = "Admin,Staff")]
     public class StaffController : Controller
     {
+        private const string StaffManagerRole = "Staff Manager";
         private readonly ShoeStoreContext _context;
         private readonly StaffSalesService _staffSalesService;
         private readonly StaffExpressService _staffExpressService;
@@ -58,7 +59,7 @@ namespace ShoeStore.Controllers
 
         public IActionResult ManageOrders()
         {
-            if (!CanAccessSection("Staff Manag"))
+            if (!CanAccessSection(StaffManagerRole))
             {
                 return Forbid();
             }
@@ -69,7 +70,7 @@ namespace ShoeStore.Controllers
         [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> ManageUsers()
         {
-            if (!CanAccessSection("Staff Manag"))
+            if (!CanAccessSection(StaffManagerRole))
             {
                 return Forbid();
             }
@@ -340,14 +341,17 @@ namespace ShoeStore.Controllers
 
         private bool CanAccessSection(string roleName)
         {
-            if (User.IsInRole("Admin") || User.IsInRole(roleName))
+            if (User.IsInRole("Admin"))
             {
                 return true;
             }
 
-            if (roleName.StartsWith("Staff", StringComparison.OrdinalIgnoreCase) && User.IsInRole("Staff"))
+            foreach (var candidate in StaffNavigationService.GetRoleNamesForAccess(roleName))
             {
-                return true;
+                if (User.IsInRole(candidate))
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -528,6 +532,11 @@ namespace ShoeStore.Controllers
         [HttpGet]
         public async Task<IActionResult> ListManagedUsers()
         {
+            if (!CanAccessSection(StaffManagerRole))
+            {
+                return Forbid();
+            }
+
             var users = (await _context.Users
                 .AsNoTracking()
                 .Include(u => u.Role)
@@ -590,6 +599,11 @@ namespace ShoeStore.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> UpdateManagedUser([FromBody] UpdateManagedUserRequest request)
         {
+            if (!CanAccessSection(StaffManagerRole))
+            {
+                return Forbid();
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
@@ -636,6 +650,11 @@ namespace ShoeStore.Controllers
         [IgnoreAntiforgeryToken]
         public async Task<IActionResult> DeleteManagedUser([FromBody] DeleteManagedUserRequest request)
         {
+            if (!CanAccessSection(StaffManagerRole))
+            {
+                return Forbid();
+            }
+
             if (!ModelState.IsValid)
             {
                 return Json(new { success = false, message = "กรุณากรอกข้อมูลให้ครบ" });

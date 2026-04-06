@@ -1,8 +1,17 @@
-@model ShoeStore.ViewModels.Product.ProductSearchViewModel
+﻿@model ShoeStore.ViewModels.Product.ProductSearchViewModel
 @using ShoeStore.ViewModels.Home
 @{
     ViewData["Title"] = "Search";
     var queryValue = Model.Query ?? string.Empty;
+    var cartRestricted = false;
+    if (User?.Identity?.IsAuthenticated == true)
+    {
+        cartRestricted = User.IsInRole("Admin")
+            || User.IsInRole("Staff")
+            || User.Claims.Any(c =>
+                c.Type == ClaimTypes.Role &&
+                c.Value.StartsWith("Staff", System.StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 @section Styles {
@@ -90,37 +99,37 @@
 }
 
 <section class="search-hero">
-    <h1>�����Թ���</h1>
-    <p>���Ҩҡ�����Թ��� �����Թ��� ���ͻ������Թ���</p>
+    <h1>ค้นหาสินค้า</h1>
+    <p>ค้นหาจากรหัสสินค้า ชื่อสินค้า หรือประเภทสินค้า</p>
     <form method="get" class="search-form" role="search">
-        <input type="text" name="q" value="@queryValue" placeholder="�� TS-006, Air Force, Limited Edition" aria-label="Search products" />
-        <button type="submit">����</button>
+        <input type="text" name="q" value="@queryValue" placeholder="เช่น TS-006, Air Force, Limited Edition" aria-label="Search products" />
+        <button type="submit">ค้นหา</button>
     </form>
     @if (Model.HasQuery)
     {
-        <p class="result-summary">�š�ä��� "@Model.Query" - @Model.ResultCount ��¡��</p>
+        <p class="result-summary">ผลการค้นหา "@Model.Query" - @Model.ResultCount รายการ</p>
     }
 </section>
 
 @if (!Model.HasQuery)
 {
     <div class="search-state">
-        <h2>����������ͧ��Ҥ���ô</h2>
-        <p>����������Թ��� (�� 6 ���� TS-006), �����Թ��� ���ͪ�����Ǵ�������ͤ���</p>
+        <h2>เริ่มค้นหารองเท้าคู่โปรด</h2>
+        <p>พิมพ์รหัสสินค้า (เช่น 6 หรือ TS-006), ชื่อสินค้า หรือชื่อหมวดหมู่เพื่อค้นหา</p>
     </div>
 }
 else if (Model.ResultCount == 0)
 {
     <div class="search-state">
-        <h2>��辺�Թ��ҷ��ç�Ѻ "@Model.Query"</h2>
-        <p>�ͧ��Ǩ�ͺ����С����ͤ��Ҵ��¤ӷ�����ŧ �蹪�����Ǵ����</p>
+        <h2>ไม่พบสินค้าที่ตรงกับ "@Model.Query"</h2>
+        <p>ลองตรวจสอบการสะกดหรือค้นหาด้วยคำที่สั้นลง เช่นชื่อหมวดหมู่</p>
     </div>
 }
 else
 {
     var resultsSection = new HomeSectionViewModel
     {
-        Title = "�š�ä���",
+        Title = "ผลการค้นหา",
         Products = Model.Results
     };
     @await Html.PartialAsync("~/Views/Shared/_ProductSection.cshtml", resultsSection)
@@ -130,7 +139,7 @@ else
 {
     var suggestionSection = new HomeSectionViewModel
     {
-        Title = "�й�����Ѻ�س",
+        Title = "แนะนำสำหรับคุณ",
         Products = Model.SuggestedProducts
     };
     @await Html.PartialAsync("~/Views/Shared/_ProductSection.cshtml", suggestionSection)
@@ -143,8 +152,21 @@ else
         window.cartApi = Object.assign(window.cartApi || {}, {
             addItem: '@Url.Action("AddItem", "Cart")'
         });
+        window.cartRestrictions = Object.assign(window.cartRestrictions || {}, {
+            isDisabled: @(cartRestricted.ToString().ToLowerInvariant()),
+            message: 'บัญชีแอดมินและพนักงานไม่สามารถซื้อสินค้าได้'
+        });
     </script>
     @await Html.PartialAsync("_ProductCatalogScripts")
 }
+
+
+
+
+
+
+
+
+
 
 

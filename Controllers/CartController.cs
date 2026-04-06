@@ -1,3 +1,4 @@
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.AspNetCore.Authorization;
@@ -64,7 +65,12 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลสินค้าไม่ถูกต้อง" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเธชเธดเธเธเนเธฒเนเธกเนเธ–เธนเธเธ•เนเธญเธ" });
+            }
+
+            if (IsInternalPurchaseRestricted())
+            {
+                return Json(new { success = false, message = "บัญชีแอดมินและพนักงานไม่สามารถซื้อสินค้าได้" });
             }
 
             var userId = GetCurrentUserId();
@@ -79,7 +85,7 @@ namespace ShoeStore.Controllers
 
             if (variant == null)
             {
-                return Json(new { success = false, message = "ไม่พบสินค้าที่เลือก" });
+                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒเธ—เธตเนเน€เธฅเธทเธญเธ" });
             }
 
             var available = variant.StockQuantity ?? 0;
@@ -89,8 +95,8 @@ namespace ShoeStore.Controllers
                 {
                     success = false,
                     message = available <= 0
-                        ? "สินค้าหมดสต็อก"
-                        : $"คงเหลือ {available} ชิ้น"
+                        ? "เธชเธดเธเธเนเธฒเธซเธกเธ”เธชเธ•เนเธญเธ"
+                        : $"เธเธเน€เธซเธฅเธทเธญ {available} เธเธดเนเธ"
                 });
             }
 
@@ -138,7 +144,12 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+            }
+
+            if (IsInternalPurchaseRestricted())
+            {
+                return Json(new { success = false, message = "บัญชีแอดมินและพนักงานไม่สามารถซื้อสินค้าได้" });
             }
 
             var userId = GetCurrentUserId();
@@ -154,7 +165,7 @@ namespace ShoeStore.Controllers
 
             if (cartItem == null)
             {
-                return Json(new { success = false, message = "ไม่พบสินค้าในตะกร้า" });
+                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒเนเธเธ•เธฐเธเธฃเนเธฒ" });
             }
 
             var desiredQuantity = Math.Max(1, request.Quantity);
@@ -185,8 +196,8 @@ namespace ShoeStore.Controllers
                 {
                     success = false,
                     message = available <= 0
-                        ? "สินค้าหมดสต็อก"
-                        : $"เพิ่มได้สูงสุดอีก {available} ชิ้น"
+                        ? "เธชเธดเธเธเนเธฒเธซเธกเธ”เธชเธ•เนเธญเธ"
+                        : $"เน€เธเธดเนเธกเนเธ”เนเธชเธนเธเธชเธธเธ”เธญเธตเธ {available} เธเธดเนเธ"
                 });
             }
 
@@ -219,7 +230,12 @@ namespace ShoeStore.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return Json(new { success = false, message = "ข้อมูลไม่ครบถ้วน" });
+                return Json(new { success = false, message = "เธเนเธญเธกเธนเธฅเนเธกเนเธเธฃเธเธ–เนเธงเธ" });
+            }
+
+            if (IsInternalPurchaseRestricted())
+            {
+                return Json(new { success = false, message = "บัญชีแอดมินและพนักงานไม่สามารถซื้อสินค้าได้" });
             }
 
             var userId = GetCurrentUserId();
@@ -234,7 +250,7 @@ namespace ShoeStore.Controllers
 
             if (cartItem == null)
             {
-                return Json(new { success = false, message = "ไม่พบสินค้าในตะกร้า" });
+                return Json(new { success = false, message = "เนเธกเนเธเธเธชเธดเธเธเนเธฒเนเธเธ•เธฐเธเธฃเนเธฒ" });
             }
 
             var variant = cartItem.ProductVariant;
@@ -323,6 +339,23 @@ namespace ShoeStore.Controllers
             }
         }
 
+        private bool IsInternalPurchaseRestricted()
+        {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                return false;
+            }
+
+            if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+            {
+                return true;
+            }
+
+            return User.Claims.Any(c =>
+                c.Type == ClaimTypes.Role &&
+                c.Value.StartsWith("Staff", StringComparison.OrdinalIgnoreCase));
+        }
+
         private int? GetCurrentUserId()
         {
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -350,19 +383,19 @@ namespace ShoeStore.Controllers
             var missing = new List<string>();
             if (string.IsNullOrWhiteSpace(user.Fullname))
             {
-                missing.Add("ชื่อ-นามสกุล");
+                missing.Add("เธเธทเนเธญ-เธเธฒเธกเธชเธเธธเธฅ");
             }
             if (string.IsNullOrWhiteSpace(user.Email))
             {
-                missing.Add("อีเมล");
+                missing.Add("เธญเธตเน€เธกเธฅ");
             }
             if (string.IsNullOrWhiteSpace(user.Phone))
             {
-                missing.Add("เบอร์โทร");
+                missing.Add("เน€เธเธญเธฃเนเนเธ—เธฃ");
             }
             if (string.IsNullOrWhiteSpace(user.Address))
             {
-                missing.Add("ที่อยู่");
+                missing.Add("เธ—เธตเนเธญเธขเธนเน");
             }
 
             return new ProfileStatusViewModel

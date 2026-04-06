@@ -2,6 +2,15 @@
 @using ShoeStore.ViewModels.Home
 @{
     ViewData["Title"] = "Home Page";
+    var cartRestricted = false;
+    if (User?.Identity?.IsAuthenticated == true)
+    {
+        cartRestricted = User.IsInRole("Admin")
+            || User.IsInRole("Staff")
+            || User.Claims.Any(c =>
+                c.Type == ClaimTypes.Role &&
+                c.Value.StartsWith("Staff", System.StringComparison.OrdinalIgnoreCase));
+    }
 }
 
 @section Styles {
@@ -50,6 +59,10 @@
     <script>
         window.cartApi = Object.assign(window.cartApi || {}, {
             addItem: '@Url.Action("AddItem", "Cart")'
+        });
+        window.cartRestrictions = Object.assign(window.cartRestrictions || {}, {
+            isDisabled: @(cartRestricted.ToString().ToLowerInvariant()),
+            message: 'บัญชีแอดมินและพนักงานไม่สามารถซื้อสินค้าได้'
         });
     </script>
     @await Html.PartialAsync("_ProductCatalogScripts")
