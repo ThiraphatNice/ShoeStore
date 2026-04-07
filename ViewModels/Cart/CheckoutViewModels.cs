@@ -22,6 +22,14 @@ namespace ShoeStore.ViewModels.Cart
 
         public decimal Subtotal { get; set; }
 
+        public decimal PairDiscountAmount { get; set; }
+
+        public decimal CouponDiscountAmount { get; set; }
+
+        public decimal NetTotal { get; set; }
+
+        public decimal ShippingFee { get; set; }
+
         public decimal DiscountPercent { get; set; }
 
         public decimal DiscountAmount { get; set; }
@@ -31,6 +39,14 @@ namespace ShoeStore.ViewModels.Cart
         public string FinalAmountDisplay => $"{FinalAmount:N0} บาท";
 
         public string SubtotalDisplay => $"{Subtotal:N0} บาท";
+
+        public string PairDiscountDisplay => $"-{PairDiscountAmount:N0} บาท";
+
+        public string CouponDiscountDisplay => $"-{CouponDiscountAmount:N0} บาท";
+
+        public string NetTotalDisplay => $"{NetTotal:N0} บาท";
+
+        public string ShippingDisplay => $"{(ShippingFee > 0 ? "+" : string.Empty)}{ShippingFee:N0} บาท";
 
         public string DiscountDisplay => $"-{DiscountAmount:N0} บาท";
 

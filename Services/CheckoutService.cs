@@ -133,29 +133,42 @@ namespace ShoeStore.Services
                 ? null
                 : couponCode.Trim();
 
-            var subtotal = snapshot.Items.Sum(item => item.LineTotal);
-            subtotal = decimal.Round(subtotal, 2, MidpointRounding.AwayFromZero);
+            var pricingItems = snapshot.Items.Select(item => new CartPricingCalculator.CartPricingItem
+            {
+                UnitPrice = item.UnitPrice,
+                DiscountPercent = item.DiscountPercent,
+                Quantity = item.Quantity
+            });
+
+            var baseTotals = CartPricingCalculator.CalculateBaseTotals(pricingItems);
+            var subtotal = baseTotals.Subtotal;
+            var pairDiscount = baseTotals.PairDiscountAmount;
+            var netTotal = baseTotals.NetTotal;
 
             var result = new CouponValidationResult
             {
                 Subtotal = subtotal,
-                FinalAmount = subtotal,
-                DiscountAmount = 0m,
+                PairDiscountAmount = pairDiscount,
+                CouponDiscountAmount = 0m,
+                NetTotal = netTotal,
+                FinalAmount = netTotal,
+                ShippingFee = 0m,
+                DiscountAmount = pairDiscount,
                 DiscountPercent = 0m,
                 CouponCode = normalizedCode,
                 IsValid = true,
                 Message = "ยังไม่ได้ใช้คูปอง",
                 CouponId = null
-            };
-
-            if (subtotal <= 0)
+            };            if (subtotal <= 0)
             {
                 result.Message = "ยังไม่มีสินค้าในตะกร้า";
+                RefreshFinalAmounts(result);
                 return result;
             }
 
             if (string.IsNullOrWhiteSpace(normalizedCode))
             {
+                RefreshFinalAmounts(result);
                 return result;
             }
 
@@ -167,6 +180,7 @@ namespace ShoeStore.Services
             {
                 result.IsValid = false;
                 result.Message = "ไม่พบคูปองนี้";
+                RefreshFinalAmounts(result);
                 return result;
             }
 
@@ -175,6 +189,7 @@ namespace ShoeStore.Services
             {
                 result.IsValid = false;
                 result.Message = "คูปองยังไม่เริ่มใช้งาน";
+                RefreshFinalAmounts(result);
                 return result;
             }
 
@@ -182,6 +197,7 @@ namespace ShoeStore.Services
             {
                 result.IsValid = false;
                 result.Message = "คูปองหมดอายุแล้ว";
+                RefreshFinalAmounts(result);
                 return result;
             }
 
@@ -190,21 +206,18 @@ namespace ShoeStore.Services
             {
                 result.IsValid = false;
                 result.Message = $"ยอดขั้นต่ำ {minPurchase:N0} บาท";
+                RefreshFinalAmounts(result);
                 return result;
             }
 
             var discountPercent = coupon.DiscountPercent ?? 0m;
-            var discountAmount = subtotal * discountPercent / 100m;
-            discountAmount = decimal.Round(discountAmount, 2, MidpointRounding.AwayFromZero);
-
-            var finalAmount = Math.Max(0m, subtotal - discountAmount);
-            finalAmount = decimal.Round(finalAmount, 2, MidpointRounding.AwayFromZero);
+            var discountAmount = decimal.Round(subtotal * discountPercent / 100m, 2, MidpointRounding.AwayFromZero);
 
             result.IsValid = true;
             result.CouponId = coupon.Id;
             result.DiscountPercent = discountPercent;
-            result.DiscountAmount = discountAmount;
-            result.FinalAmount = finalAmount;
+            result.CouponDiscountAmount = discountAmount;
+            RefreshFinalAmounts(result);
             result.Message = $"ใช้คูปองลด {discountPercent:N0}%";
 
             return result;
@@ -243,5 +256,19 @@ namespace ShoeStore.Services
 
             public decimal LineTotal => decimal.Round(FinalUnitPrice * Quantity, 2, MidpointRounding.AwayFromZero);
         }
+
+        private static void RefreshFinalAmounts(CouponValidationResult result)
+        {
+            result.DiscountAmount = decimal.Round(result.PairDiscountAmount + result.CouponDiscountAmount, 2, MidpointRounding.AwayFromZero);
+            result.NetTotal = Math.Max(0m, decimal.Round(result.Subtotal - result.DiscountAmount, 2, MidpointRounding.AwayFromZero));
+            result.ShippingFee = CartPricingCalculator.CalculateShippingFee(result.NetTotal);
+            result.FinalAmount = decimal.Round(result.NetTotal + result.ShippingFee, 2, MidpointRounding.AwayFromZero);
+        }
     }
 }
+
+
+
+
+
+

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using ShoeStore.Models.db;
 using ShoeStore.ViewModels.Cart;
 using System.Security.Claims;
+using ShoeStore.Services;
 
 namespace ShoeStore.Controllers
 {
@@ -37,9 +38,13 @@ namespace ShoeStore.Controllers
                 .AsNoTracking()
                 .ToListAsync();
 
+            var mappedItems = items.Select(MapCartItem).ToList();
+            var summary = CartPricingCalculator.CalculateBaseTotals(mappedItems.Select(ToPricingItem));
+
             var model = new CartPageViewModel
             {
-                Items = items.Select(MapCartItem).ToList()
+                Items = mappedItems,
+                Totals = BuildCartTotalsViewModel(summary)
             };
 
             return View(model);
@@ -293,28 +298,18 @@ namespace ShoeStore.Controllers
 
         private async Task<CartTotalsViewModel> CalculateCartTotalsAsync(int userId)
         {
-            var aggregated = await _context.CartItems
+            var pricingItems = await _context.CartItems
                 .Where(ci => ci.UserId == userId)
-                .Select(ci => new
+                .Select(ci => new CartPricingCalculator.CartPricingItem
                 {
-                    ci.Quantity,
-                    Price = ci.ProductVariant.Product.Price,
-                    Discount = ci.ProductVariant.Product.DiscountPercent ?? 0m
+                    UnitPrice = ci.ProductVariant.Product.Price,
+                    DiscountPercent = ci.ProductVariant.Product.DiscountPercent ?? 0m,
+                    Quantity = ci.Quantity
                 })
                 .ToListAsync();
 
-            var totalItems = aggregated.Sum(item => item.Quantity);
-            var totalAmount = aggregated.Sum(item =>
-            {
-                var finalUnit = item.Price * (1 - item.Discount / 100m);
-                return finalUnit * item.Quantity;
-            });
-
-            return new CartTotalsViewModel
-            {
-                TotalItems = totalItems,
-                TotalAmount = decimal.Round(totalAmount, 2, MidpointRounding.AwayFromZero)
-            };
+            var summary = CartPricingCalculator.CalculateBaseTotals(pricingItems);
+            return BuildCartTotalsViewModel(summary);
         }
 
         private static decimal CalculateLineTotal(CartItem cartItem)
@@ -404,5 +399,29 @@ namespace ShoeStore.Controllers
                 MissingFields = missing
             };
         }
+
+        private static CartTotalsViewModel BuildCartTotalsViewModel(CartPricingCalculator.CartPricingSummary summary)
+        {
+            var netTotal = Math.Max(0m, decimal.Round(summary.Subtotal - summary.PairDiscountAmount, 2, MidpointRounding.AwayFromZero));
+            var shipping = CartPricingCalculator.CalculateShippingFee(netTotal);
+            var finalAmount = decimal.Round(netTotal + shipping, 2, MidpointRounding.AwayFromZero);
+
+            return new CartTotalsViewModel
+            {
+                TotalItems = summary.TotalQuantity,
+                Subtotal = summary.Subtotal,
+                PairDiscountAmount = summary.PairDiscountAmount,
+                CouponDiscountAmount = 0m,
+                ShippingFee = shipping,
+                FinalAmount = finalAmount
+            };
+        }
+
+        private static CartPricingCalculator.CartPricingItem ToPricingItem(CartItemViewModel item) => new()
+        {
+            UnitPrice = item.UnitPrice,
+            DiscountPercent = item.DiscountPercent,
+            Quantity = item.Quantity
+        };
     }
 }

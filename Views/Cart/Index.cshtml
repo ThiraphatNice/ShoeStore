@@ -463,13 +463,13 @@
             </div>
         </div>
 
-        <div class="modal fade checkout-modal" id="checkoutModal" tabindex="-1" aria-hidden="true" data-subtotal="@Model.TotalAmount.ToString("0.00", CultureInfo.InvariantCulture)">
+        <div class="modal fade checkout-modal" id="checkoutModal" tabindex="-1" aria-hidden="true" data-subtotal="@Model.Totals.Subtotal.ToString("0.00", CultureInfo.InvariantCulture)">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
                         <div>
                             <h5 class="modal-title">รายการสินค้าในตะกร้า</h5>
-                            <small class="text-muted">ยอดปัจจุบัน : @Model.TotalAmountDisplay</small>
+                            <small class="text-muted">ยอดที่ต้องชำระ : @Model.Totals.FinalAmountDisplay</small>
                         </div>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -551,16 +551,28 @@
                         </div>
                         <div class="checkout-summary-box">
                             <div class="row-line">
-                                <span>ราคาสินค้า</span>
-                                <strong id="checkoutSubtotal">@Model.TotalAmountDisplay</strong>
+                                <span>ยอดรวมสินค้า</span>
+                                <strong id="checkoutSubtotal">@Model.Totals.SubtotalDisplay</strong>
+                            </div>
+                            <div class="row-line text-success">
+                                <span>ส่วนลดซื้อ 2 คู่ขึ้นไป</span>
+                                <strong id="checkoutPairDiscount">@Model.Totals.PairDiscountDisplay</strong>
+                            </div>
+                            <div class="row-line text-success">
+                                <span>ส่วนลดคูปอง</span>
+                                <strong id="checkoutDiscount">@Model.Totals.CouponDiscountDisplay</strong>
                             </div>
                             <div class="row-line">
-                                <span>ส่วนลดคูปอง</span>
-                                <strong id="checkoutDiscount">-0 บาท</strong>
+                                <span>ยอดหลังหักส่วนลด</span>
+                                <strong id="checkoutNetTotal">@Model.Totals.NetTotalDisplay</strong>
+                            </div>
+                            <div class="row-line">
+                                <span>ค่าจัดส่ง</span>
+                                <strong id="checkoutShipping">@Model.Totals.ShippingDisplay</strong>
                             </div>
                             <div class="row-line text-danger">
-                                <span>ราคาสุทธิ</span>
-                                <strong id="checkoutFinal">@Model.TotalAmountDisplay</strong>
+                                <span>ยอดที่ต้องชำระ</span>
+                                <strong id="checkoutFinal">@Model.Totals.FinalAmountDisplay</strong>
                             </div>
                         </div>
                     </div>
@@ -609,8 +621,18 @@
             orderHistory: '@Url.Action("Index", "Order")'
         });
         window.checkoutDefaults = {
-            subtotal: parseFloat('@Model.TotalAmount.ToString("0.00", CultureInfo.InvariantCulture)'),
-            subtotalDisplay: '@Model.TotalAmountDisplay'
+            subtotal: parseFloat('@Model.Totals.Subtotal.ToString("0.00", CultureInfo.InvariantCulture)'),
+            pairDiscount: parseFloat('@Model.Totals.PairDiscountAmount.ToString("0.00", CultureInfo.InvariantCulture)'),
+            couponDiscount: parseFloat('@Model.Totals.CouponDiscountAmount.ToString("0.00", CultureInfo.InvariantCulture)'),
+            netTotal: parseFloat('@Model.Totals.NetTotal.ToString("0.00", CultureInfo.InvariantCulture)'),
+            shippingFee: parseFloat('@Model.Totals.ShippingFee.ToString("0.00", CultureInfo.InvariantCulture)'),
+            finalAmount: parseFloat('@Model.Totals.FinalAmount.ToString("0.00", CultureInfo.InvariantCulture)'),
+            subtotalDisplay: '@Model.Totals.SubtotalDisplay',
+            pairDiscountDisplay: '@Model.Totals.PairDiscountDisplay',
+            couponDiscountDisplay: '@Model.Totals.CouponDiscountDisplay',
+            netTotalDisplay: '@Model.Totals.NetTotalDisplay',
+            shippingDisplay: '@Model.Totals.ShippingDisplay',
+            finalAmountDisplay: '@Model.Totals.FinalAmountDisplay'
         };
     </script>
     <script>

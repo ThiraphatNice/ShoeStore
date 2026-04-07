@@ -23,7 +23,10 @@
     const couponInput = document.getElementById('couponInput');
     const couponStatusText = document.getElementById('couponStatusText');
     const subtotalLabel = document.getElementById('checkoutSubtotal');
+    const pairDiscountLabel = document.getElementById('checkoutPairDiscount');
     const discountLabel = document.getElementById('checkoutDiscount');
+    const netLabel = document.getElementById('checkoutNetTotal');
+    const shippingLabel = document.getElementById('checkoutShipping');
     const finalLabel = document.getElementById('checkoutFinal');
     const submitButton = document.getElementById('checkoutSubmit');
     const statusIcon = document.getElementById('paymentStatusIcon');
@@ -31,18 +34,32 @@
     const statusMessage = document.getElementById('paymentStatusMessage');
     const statusHistoryBtn = document.getElementById('paymentStatusHistory');
 
+    const defaults = window.checkoutDefaults ?? {};
     let currentMethod = 'Credit Card';
     let couponTimer;
     let reloadAfterStatus = false;
-    const initialSubtotal = Number(window.checkoutDefaults?.subtotal ?? 0);
+    const initialSubtotal = Number(defaults.subtotal ?? 0);
     let currentTotals = {
         subtotal: initialSubtotal,
-        finalAmount: initialSubtotal,
-        discountAmount: 0,
+        pairDiscountAmount: Number(defaults.pairDiscount ?? 0),
+        couponDiscountAmount: Number(defaults.couponDiscount ?? 0),
+        netTotal: Number(defaults.netTotal ?? initialSubtotal),
+        shippingFee: Number(defaults.shippingFee ?? 0),
+        finalAmount: Number(defaults.finalAmount ?? initialSubtotal),
         couponCode: null
     };
 
-    const formatCurrency = (value) => `${new Intl.NumberFormat('th-TH').format(value)} บาท`;
+    const formatCurrency = (value, options = {}) => {
+        const absValue = Math.abs(value);
+        const formatted = new Intl.NumberFormat('th-TH').format(absValue);
+        if (options.sign === 'negative') {
+            return `-${formatted} บาท`;
+        }
+        if (options.sign === 'positive') {
+            return `${value > 0 ? '+' : ''}${formatted} บาท`;
+        }
+        return `${formatted} บาท`;
+    };
 
     const setPaymentTab = (method) => {
         currentMethod = method;
@@ -106,11 +123,18 @@
             }
             const data = await response.json();
             currentTotals.subtotal = data.subtotal ?? currentTotals.subtotal;
-            currentTotals.finalAmount = data.finalAmount ?? currentTotals.subtotal;
-            currentTotals.discountAmount = data.discountAmount ?? 0;
+            currentTotals.pairDiscountAmount = data.pairDiscountAmount ?? currentTotals.pairDiscountAmount;
+            currentTotals.couponDiscountAmount = data.couponDiscountAmount ?? 0;
+            const calculatedNet = currentTotals.subtotal - (currentTotals.pairDiscountAmount + currentTotals.couponDiscountAmount);
+            currentTotals.netTotal = data.netTotal ?? Math.max(0, calculatedNet);
+            currentTotals.shippingFee = data.shippingFee ?? (currentTotals.netTotal > 0 && currentTotals.netTotal < 3000 ? 300 : 0);
+            currentTotals.finalAmount = data.finalAmount ?? (currentTotals.netTotal + currentTotals.shippingFee);
             currentTotals.couponCode = data.isValid && data.couponId ? data.couponCode : null;
             subtotalLabel && (subtotalLabel.textContent = data.subtotalDisplay ?? formatCurrency(currentTotals.subtotal));
-            discountLabel && (discountLabel.textContent = data.discountDisplay ?? `-${new Intl.NumberFormat('th-TH').format(currentTotals.discountAmount)} บาท`);
+            pairDiscountLabel && (pairDiscountLabel.textContent = data.pairDiscountDisplay ?? formatCurrency(currentTotals.pairDiscountAmount, { sign: 'negative' }));
+            discountLabel && (discountLabel.textContent = data.couponDiscountDisplay ?? formatCurrency(currentTotals.couponDiscountAmount, { sign: 'negative' }));
+            netLabel && (netLabel.textContent = data.netTotalDisplay ?? formatCurrency(currentTotals.netTotal));
+            shippingLabel && (shippingLabel.textContent = data.shippingDisplay ?? formatCurrency(currentTotals.shippingFee, { sign: 'positive' }));
             finalLabel && (finalLabel.textContent = data.finalAmountDisplay ?? formatCurrency(currentTotals.finalAmount));
             if (couponStatusText) {
                 couponStatusText.textContent = data.message || '';
